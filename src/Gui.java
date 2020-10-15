@@ -20,9 +20,9 @@ public class Gui extends JFrame {
 		button2 = new JButton("Button2");
 		
 		// Setup top panel
-		LocationList l = new LocationList();
-		Route r = new Route(l);
-		topPanel = new LocationRenderer(l, r);
+		DistanceMatrix d = new DistanceMatrix(Location.RandomList(10, 20));
+		Route r = new Route(d);
+		topPanel = new LocationRenderer(r);
 		
 		// Setup bottom panel
 		bottomPanel = new JPanel();

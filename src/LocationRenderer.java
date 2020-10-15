@@ -11,26 +11,19 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class LocationRenderer extends JPanel {
-	private final LocationList location;
 	private final Route route;
 
 	/**
 	 * Constructor.
 	 */
-	public LocationRenderer(LocationList l, Route r) {
-		location = l;
+	public LocationRenderer(Route r) {
 		route = r;
-		
-		l.add(0, 0);
-		l.add(0, 20);
-		l.add(20, 0);
-		l.add(-20, -20);
 		
 		r.add(0);
 		r.add(1);
 		r.add(2);
 		r.add(3);
-		r.add(0);
+		r.add(4);
 	}
 	
 	/**
@@ -78,8 +71,8 @@ public class LocationRenderer extends JPanel {
 
 		// Find max distance from (0,0)
 		long max = 0;
-		for (int i=0; i<location.size(); i++) {
-			Location l = location.get(i);
+		for (int i=0; i<route.size(); i++) {
+			Location l = route.getLocation(i);
 			if (max < Math.abs(l.x)) max = Math.abs(l.x);
 			if (max < Math.abs(l.y)) max = Math.abs(l.y);
 		}
@@ -93,8 +86,8 @@ public class LocationRenderer extends JPanel {
 		g.setColor(Color.RED);
 		g.setStroke(new BasicStroke(2));
 		for (int i=1; i<route.size(); i++) {
-			Location l0 = route.get(i - 1);
-			Location l1 = route.get(i);
+			Location l0 = route.getLocation(i - 1);
+			Location l1 = route.getLocation(i);
 			int x0 = (int)((float)l0.x * scale) + xOffset;
 			int y0 = (int)((float)l0.y * scale) + yOffset;
 			int x1 = (int)((float)l1.x * scale) + xOffset;
@@ -110,8 +103,8 @@ public class LocationRenderer extends JPanel {
 		// Draw locations
 		g.setColor(Color.BLACK);
 		g.setStroke(new BasicStroke(2));
-		for (int i=0; i<location.size(); i++) {
-			Location l = location.get(i);
+		for (int i=0; i<route.size(); i++) {
+			Location l = route.getLocation(i);
 			int x = (int)((float)l.x * scale) + xOffset;
 			int y = (int)((float)l.y * scale) + yOffset;
 			g.drawLine(x - z, y - z, x + z, y + z);

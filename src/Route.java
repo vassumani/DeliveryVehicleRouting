@@ -1,78 +1,91 @@
-import java.util.ArrayList;
 
 /**
- * A route contains a list of locations which are to be visited, and the total cost of the route.
+ * Contains a list of locations to be visited.
  */
 public class Route {
 
 	/**
-	 * Add a new location to the list.
+	 * Route constructor.
+	 * @param d The distance matrix to use as a reference.
 	 */
-	public void add(int locationIndex) {
-		add(refList.get(locationIndex));
-	}
-	
-	/**
-	 * Add a new location to the list.
-	 */
-	public void add(Location location) {
-		assert location.index != Location.nullIndex;
-		locations.add(location);
-		if (last != null) {
-			cost += refList.cost(location.index, last.index);
-		}
-		last = location;
+	public Route(DistanceMatrix d) {
+		distanceMatrix = d;
+		location = new IntegerList();
+		travelDistance = 0;
 	}
 
 	/**
-	 * Get the location at a given index.
+	 * Get the reference distance matrix
+	 * @return Reference to the distance matrix.
 	 */
-	public Location get(int index) {
-		return locations.get(index);
+	public DistanceMatrix distanceMatrix() {
+		return distanceMatrix;
 	}
 	
 	/**
-	 * Returns the number of locations within the list.
+	 * Get the total distance of the route thus far.
+	 * @return Total route cost/distance.
+	 */
+	public long travelDistance() {
+		return travelDistance;
+	}
+	
+	/**
+	 * Get the current number of locations within the route.
+	 * @return Number of locations within the route.
 	 */
 	public int size() {
-		return locations.size();
+		return location.size();
 	}
 	
 	/**
-	 * Returns true if the list is empty.
+	 * Add a new location to the route.
+	 * @param locationIndex Index of the location within the reference distance matrix.
+	 */
+	public void add(int locationIndex) {
+		assert (0 <= locationIndex) && (locationIndex < distanceMatrix.size());
+		if (!location.isEmpty()) {
+			int last = location.get(location.size());
+			travelDistance += distanceMatrix.getDistance(last, locationIndex);
+		}
+		location.add(locationIndex);
+	}
+	
+	/**
+	 * Get the distance matrix index of a location for a given index within the route.
+	 * @param index Index of the location within the route.
+	 * @return Index of the location within the distance matrix.
+	 */
+	public int getLocationIndex(int index) {
+		return location.get(index);
+	}
+	
+	/**
+	 * Get the location at a given index within the route.
+	 * @param index Index of the location within the route.
+	 * @return Location data at the given index.
+	 */
+	public Location getLocation(int index) {
+		return distanceMatrix.getLocation(location.get(index));
+	}
+	
+	/**
+	 * Check if the route is empty.
+	 * @return True if the route has no locations.
 	 */
 	public boolean isEmpty() {
-		return locations.isEmpty();
-	}
-	
-	/**
-	 * Returns the current cost of the route.
-	 */
-	public long getCost() {
-		return cost;
+		return location.isEmpty();
 	}
 	
 	/**
 	 * Reset this route to contains no locations.
 	 */
 	public void clear() {
-		locations.clear();
-		last = null;
-		cost = 0;
+		location.clear();
+		travelDistance = 0;
 	}
 	
-	/**
-	 * Default constructor.
-	 */
-	public Route(LocationList l) {
-		locations = new ArrayList<Location>();
-		last = null;
-		cost = 0;
-		refList = l;
-	}
-	
-	private ArrayList<Location> locations;
-	private Location last;
-	private long cost;
-	private LocationList refList;
+	private DistanceMatrix distanceMatrix;
+	private IntegerList location;
+	private long travelDistance;
 }
