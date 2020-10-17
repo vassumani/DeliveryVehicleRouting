@@ -5,22 +5,45 @@ import java.util.Random;
  * This class is to be treated as read-only once constructed.
  */
 public class Location {
-	public final long x;
-	public final long y;
+	public final Coordinate coord;
+	public final String name;
 
+	/**
+	 * Default location constructor.
+	 */
 	public Location() {
-		x = 0;
-		y = 0;
+		coord = new Coordinate();
+		name = "";
 	}
-	
-	public Location(long X, long Y) {
-		x = X;
-		y = Y;
+
+	/**
+	 * Location constructor with information specified.
+	 * @param x X-coordinate of this location.
+	 * @param y Y-coordinate of this location.
+	 * @param label An optional name used to identify this location.
+	 */
+	public Location(long x, long y, String label) {
+		assert label != null;
+		coord = new Coordinate(x, y);
+		name = label;
 	}
-	
-	public Location(Location l) {
-		x = l.x;
-		y = l.y;
+
+	/**
+	 * Copy constructor for location data.
+	 * @param src The source location which should be copied.
+	 */
+	public Location(Location src) {
+		coord = src.coord;
+		name = src.name;
+	}
+
+	/**
+	 * A method to convert this coordinate to a string.
+	 * @return The coordinate in string format.
+	 */
+	@Override
+	public String toString() {
+		return name + ":" + coord;
 	}
 	
 	/**
@@ -36,7 +59,7 @@ public class Location {
 		for (int i=0; i<count; i++) {
 			long x = rand.nextInt(limit) - range;
 			long y = rand.nextInt(limit) - range;
-			list[i] = new Location(x, y);
+			list[i] = new Location(x, y, Integer.toString(i + 1));
 		}
 		return list;
 	}

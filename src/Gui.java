@@ -20,9 +20,24 @@ public class Gui extends JFrame {
 		button2 = new JButton("Button2");
 		
 		// Setup top panel
-		DistanceMatrix d = new DistanceMatrix(Location.RandomList(10, 20));
-		Route r = new Route(d);
-		topPanel = new LocationRenderer(r);
+		/*
+		Location[] l = new Location[5];
+		l[0] = new Location(0, 0, "1");
+		l[1] = new Location(-5, 0, "2");
+		l[2] = new Location(15, 0, "3");
+		l[3] = new Location(0, -5, "4");
+		l[4] = new Location(0, 15, "5");
+		//*/
+		Location[] l = Location.RandomList(10, 20);
+		DistanceMatrix d = new DistanceMatrix(l);
+		UsageMatrix u = new UsageMatrix(d);
+		topPanel = new LocationRenderer(d, u);
+		final int iMax = 3;
+		for (int j=0; j<3; j++) {
+			Route r = new Route(d);
+			for (int i=0; i<iMax; i++) r.add(i + (j * iMax));
+			topPanel.getRoutes().add(r);
+		}
 		
 		// Setup bottom panel
 		bottomPanel = new JPanel();
@@ -36,11 +51,11 @@ public class Gui extends JFrame {
 		verticalSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		verticalSplit.setTopComponent(topPanel);
 		verticalSplit.setBottomComponent(bottomPanel);
-		verticalSplit.setDividerLocation(300);
+		verticalSplit.setDividerLocation(520);
 
 		// Setup this JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setPreferredSize(new Dimension(400,400));
+		setPreferredSize(new Dimension(800,600));
 		getContentPane().setLayout(new GridLayout());
 		getContentPane().add(verticalSplit);
 		
