@@ -1,48 +1,57 @@
 import java.awt.*;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.*;
-
 
 @SuppressWarnings("serial")
 public class Gui extends JFrame {
-	private final JSplitPane verticalSplit;
-	private final LocationRenderer topPanel;
-	private final JPanel bottomPanel;
+	private final JPanel verticalSplit;
+	private final JPanel buttonPanel;
+	private final LocationRenderer locationPanel;
 	private final JButton button1;
 	private final JButton button2;
+	private Timer refreshTimer;
 	
 	/**
 	 * Default constructor.
+	 * @param d Distance matrix to be rendered.
+	 * @param u Usage matrix to be rendered.
 	 */
-	public Gui() {
+	public Gui(DistanceMatrix d, UsageMatrix u) {
+		
+		// Set a timer to refresh the screen from time to time
+		refreshTimer = new Timer(true);
+		refreshTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				repaint();
+			}
+		}, 17, 17);
 		
 		// Create buttons
 		button1 = new JButton("Button1");
 		button2 = new JButton("Button2");
-		
-		// Setup top panel
-		DistanceMatrix d = new DistanceMatrix(Location.RandomList(10, 20));
-		Route r = new Route(d);
-		topPanel = new LocationRenderer(r);
-		
-		// Setup bottom panel
-		bottomPanel = new JPanel();
-		bottomPanel.setPreferredSize(new Dimension(0, 50));
-		bottomPanel.setLayout(new GridLayout(1, 2));
-		bottomPanel.add(button1);
-		bottomPanel.add(button2);
 
-		// Setup the layout panels
-		verticalSplit = new JSplitPane();
-		verticalSplit.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		verticalSplit.setTopComponent(topPanel);
-		verticalSplit.setBottomComponent(bottomPanel);
-		verticalSplit.setDividerLocation(300);
+		// Setup location panel
+		locationPanel = new LocationRenderer(d, u);
+
+		// Setup button panel
+		buttonPanel = new JPanel();
+		buttonPanel.setLayout(new GridLayout(1, 2));
+		buttonPanel.add(button1);
+		buttonPanel.add(button2);
+
+		// Setup vertical panel
+		verticalSplit = new JPanel(new BorderLayout());
+		verticalSplit.add(buttonPanel, BorderLayout.PAGE_START);
+		verticalSplit.add(locationPanel, BorderLayout.CENTER);
 
 		// Setup this JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setPreferredSize(new Dimension(400,400));
+		setPreferredSize(new Dimension(600,500));
 		getContentPane().setLayout(new GridLayout());
 		getContentPane().add(verticalSplit);
+		setMinimumSize(new Dimension(100, 100));
 		
 		// Final command before returning
 		pack();
@@ -51,12 +60,14 @@ public class Gui extends JFrame {
 	/**
 	 * Start the main GUI.
 	 * Do this via the event queue to ensure that the action is taken within the correct thread.
+	 * @param d Distance matrix to be rendered.
+	 * @param u Usage matrix to be rendered.
 	 */
-	static public void create() {
+	static public void create(DistanceMatrix d, UsageMatrix u) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new Gui().setVisible(true);
+				new Gui(d, u).setVisible(true);
 			}
 		});
 	}

@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.Vector;
 
 import javax.swing.JPanel;
 
@@ -11,19 +12,30 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class LocationRenderer extends JPanel {
-	private final Route route;
+	private final DistanceMatrix distanceMatrix;
+	private final UsageMatrix usageMatrix;
+	private Vector<Route> routes;
+	private Solver solver;
 
 	/**
-	 * Constructor.
+	 * Location renderer constructor.
+	 * @param d The reference distance matrix for this location renderer.
+	 * @param u The usage matrix for this location renderer.
 	 */
-	public LocationRenderer(Route r) {
-		route = r;
-		
-		r.add(0);
-		r.add(1);
-		r.add(2);
-		r.add(3);
-		r.add(4);
+	public LocationRenderer(DistanceMatrix d, UsageMatrix u) {
+		distanceMatrix = d;
+		usageMatrix = u;
+		routes = new Vector<Route>();
+		solver = new Solver(d, u);
+		this.setMinimumSize(new Dimension(50, 50));
+	}
+	
+	/**
+	 * Access the list of routes to be rendered.
+	 * @param Reference to the actual list used internally.
+	 */
+	public Vector<Route> getRoutes() {
+		return routes;
 	}
 	
 	/**
@@ -31,85 +43,186 @@ public class LocationRenderer extends JPanel {
 	 */
 	@Override
 	protected void paintComponent(Graphics g) {
-		Dimension size = getSize();
-		drawGrid((Graphics2D)g, size);
-		drawLocations((Graphics2D)g, size);
+		Graphics2D g2D = (Graphics2D)g;
+		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
+		drawGrid(g2D, scale);
+		drawUsage(g2D, scale);
+		/*
+		float h = 0;
+		for (Route r : routes) {
+			drawRoute(g2D, scale, r, Color.getHSBColor(h, 1, 0.9f));
+			h += 0.2;
+		}
+		*/
+		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0, 1, 0.9f));
+		drawLocations(g2D, scale);
+	}
+
+	/**
+	 * A private class used to calculate scale and offset of locations for rendering.
+	 */
+	private class ScaleOffset {
+		public final Dimension size;
+		public final float scale;
+		public final float xOffset;
+		public final float yOffset;
+		
+		/**
+		 * Setup the scale and offset needed for rendering locations.
+		 * @param panelSize Size of the graphics panel which will be getting rendered too.
+		 * @param dm Distance matrix which contains the locations to be rendered.
+		 * @throws Exception 
+		 */
+		public ScaleOffset(Dimension panelSize, DistanceMatrix dm)  {
+			final int padding = 15;
+			final int minSize = 10;
+			
+			// Make sure panel is not too small
+			if ((panelSize.width < minSize) || (panelSize.height < minSize)) {
+				panelSize = new Dimension(
+					Math.max(panelSize.width, minSize),
+					Math.max(panelSize.height, minSize));
+			}
+			
+			// Calculate distance matrix area along access
+			AABB aabb = dm.getLocationAABB();
+			assert aabb.isValid() != false;
+			float xScale = (float)(panelSize.width - (padding * 2)) / (float)(aabb.xMax - aabb.xMin);
+			float yScale = (float)(panelSize.height - (padding * 2)) / (float)(aabb.yMax - aabb.yMin);
+
+			// Record values
+			scale = Math.min(xScale, yScale);
+			xOffset = (panelSize.width / 2) - (scale * (aabb.xMax + aabb.xMin) / 2);
+			yOffset = (panelSize.height / 2) - (scale * (aabb.yMax + aabb.yMin) / 2);
+			size = panelSize;
+		}
+		
+		/**
+		 * Update a coordinate by scaling it and applying an offset.
+		 * @param inOut The coordinate to be scaled and offset.
+		 * @return A scaled and offset coordinate.
+		 */
+		public Coordinate Update(Coordinate c) {
+			return new Coordinate(
+				(long)(xOffset + (scale * c.x)),
+				(long)(yOffset + (scale * c.y)));
+		}
 	}
 	
 	/**
 	 * Draw a regular grid on the panel.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
 	 */
-	private void drawGrid(Graphics2D g, Dimension size) {
+	private void drawGrid(Graphics2D g, ScaleOffset scale) {
 		final int targetGridSize = 50;
 
 		// Get number of lines to draw
-		int xMax = size.width / targetGridSize;
-		int yMax = size.height / targetGridSize;
+		int xMax = (int)((float)scale.size.width / targetGridSize);
+		int yMax = (int)((float)scale.size.height / targetGridSize);
 		
 		// Get spacing between lines
-		int xStep = size.width / xMax;
-		int yStep = size.height / yMax;
+		float xStep = (float)scale.size.width / xMax;
+		float yStep = (float)scale.size.height / yMax;
 		
 		// Draw lines
-		g.setColor(Color.LIGHT_GRAY);
+		g.setColor(Color.getHSBColor(0, 0, 0.85f));
 		g.setStroke(new BasicStroke(1));
 		for (int x=1; x<xMax; x++) {
-			g.drawLine(x * xStep, 0, x * xStep, size.height);
+			g.drawLine((int)(x * xStep), 0, (int)(x * xStep), scale.size.height);
 		}
 		for (int y=1; y<yMax; y++) {
-			g.drawLine(0, y * yStep, size.width, y * yStep);
+			g.drawLine(0, (int)(y * yStep), scale.size.width, (int)(y * yStep));
 		}
 	}
 
 	/**
-	 * Draw a regular grid on the panel.
+	 * Draw to the the panel the locations within the distance matrix.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
 	 */
-	private void drawLocations(Graphics2D g, Dimension size) {
-		final int z = 2;
-		final double arrowLength = 10;
-		final double arrowAngle = 0.35;
-
-		// Find max distance from (0,0)
-		long max = 0;
-		for (int i=0; i<route.size(); i++) {
-			Location l = route.getLocation(i);
-			if (max < Math.abs(l.x)) max = Math.abs(l.x);
-			if (max < Math.abs(l.y)) max = Math.abs(l.y);
-		}
-
-		// Calculate scale and offsets
-		float scale = 0.45f * (float)Math.min(size.width, size.height) / (float)max;
-		int xOffset = size.width / 2;
-		int yOffset = size.height / 2;
-		
-		// Draw route
-		g.setColor(Color.RED);
-		g.setStroke(new BasicStroke(2));
-		for (int i=1; i<route.size(); i++) {
-			Location l0 = route.getLocation(i - 1);
-			Location l1 = route.getLocation(i);
-			int x0 = (int)((float)l0.x * scale) + xOffset;
-			int y0 = (int)((float)l0.y * scale) + yOffset;
-			int x1 = (int)((float)l1.x * scale) + xOffset;
-			int y1 = (int)((float)l1.y * scale) + yOffset;
-			g.drawLine(x0, y0, x1, y1);
-			double a = Math.atan2(y1 - y0, x1 - x0);
-			g.drawLine(x1, y1, x1 - (int)(arrowLength * Math.cos(a + arrowAngle)), y1 - (int)(arrowLength * Math.sin(a + arrowAngle)));
-			g.drawLine(x1, y1, x1 - (int)(arrowLength * Math.cos(a - arrowAngle)), y1 - (int)(arrowLength * Math.sin(a - arrowAngle)));
-		}
-		
-		//System.out.println(Math.cos(0.1 + Math.atan2(20, 0)));
-		
-		// Draw locations
+	private void drawLocations(Graphics2D g, ScaleOffset scale) {
 		g.setColor(Color.BLACK);
 		g.setStroke(new BasicStroke(2));
-		for (int i=0; i<route.size(); i++) {
-			Location l = route.getLocation(i);
-			int x = (int)((float)l.x * scale) + xOffset;
-			int y = (int)((float)l.y * scale) + yOffset;
-			g.drawLine(x - z, y - z, x + z, y + z);
-			g.drawLine(x - z, y + z, x + z, y - z);
-			g.drawString(Integer.toString(i), x + z + 2, y);
+		final int z = 2;
+		for (int i=0; i<distanceMatrix.size(); i++) {
+			Location l = distanceMatrix.getLocation(i);
+			Coordinate c = scale.Update(l.coord);
+			g.drawLine(
+				(int)c.x - z,
+				(int)c.y - z,
+				(int)c.x + z,
+				(int)c.y + z);
+			g.drawLine(
+				(int)c.x - z,
+				(int)c.y + z,
+				(int)c.x + z,
+				(int)c.y - z);
+			g.drawString(
+				l.name,
+				c.x + z + 2,
+				c.y);
+		}
+	}
+
+	/**
+	 * Draw to the the panel the path usage between all locations.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
+	 */
+	private void drawUsage(Graphics2D g, ScaleOffset scale) {
+		g.setStroke(new BasicStroke(1));
+		final int size = usageMatrix.size();
+		final float maxUsage = Math.max(usageMatrix.getMaxUsage(), 0.0001f);
+		
+		for (int x=0; x<size; x++) {
+			for (int y=x+1; y<size; y++) {
+				float usage = usageMatrix.getUsage(x, y) / maxUsage;
+				if (usage > 0.001) {
+					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
+					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
+					Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
+					g.drawLine(
+						(int)a.x,
+						(int)a.y,
+						(int)b.x,
+						(int)b.y);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Draw to the the panel the given route.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
+	 * @param r Route to be rendered.
+	 * @param c The colour to use when drawing the route.
+	 */
+	private void drawRoute(Graphics2D g, ScaleOffset scale, Route route, Color c) {
+		final double arrowLength = 12;
+		final double arrowAngle = 0.35;
+		g.setColor(c);
+		g.setStroke(new BasicStroke(1.8f));
+		for (int i=1; i<route.size(); i++) {
+			Coordinate a = scale.Update(route.getLocation(i - 1).coord);
+			Coordinate b = scale.Update(route.getLocation(i).coord);
+			g.drawLine(
+				(int)a.x,
+				(int)a.y,
+				(int)b.x,
+				(int)b.y);
+			double angle = Math.atan2(b.y - a.y, b.x - a.x);
+			g.drawLine(
+				(int)b.x,
+				(int)b.y,
+				(int)b.x - (int)(arrowLength * Math.cos(angle + arrowAngle)),
+				(int)b.y - (int)(arrowLength * Math.sin(angle + arrowAngle)));
+			g.drawLine(
+				(int)b.x,
+				(int)b.y,
+				(int)b.x - (int)(arrowLength * Math.cos(angle - arrowAngle)),
+				(int)b.y - (int)(arrowLength * Math.sin(angle - arrowAngle)));
 		}
 	}
 }
