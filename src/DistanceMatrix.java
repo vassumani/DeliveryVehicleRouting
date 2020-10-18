@@ -56,7 +56,7 @@ public class DistanceMatrix {
 	 * Get the distance between two locations.
 	 * @param locationA The index of location-A within the location list.
 	 * @param locationB The index of location-B within the location list.
-	 * @return Cost of traveling from location-A to location-B.
+	 * @return Cost of travelling from location-A to location-B.
 	 */
 	public long getDistance(int locationA, int locationB) {
 		return distance[locationA][locationB];

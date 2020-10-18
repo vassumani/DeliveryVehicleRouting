@@ -15,6 +15,7 @@ public class UsageMatrix {
 		// Record the size of the matrix
 		size = d.size();
 		maxUsage = 1;
+		averageUsage = 1;
 		
 		// Create a new array for the usage matrix
 		usage = new float[size][size];
@@ -30,7 +31,7 @@ public class UsageMatrix {
 	 * @param route The route which defines the path.
 	 * @param amount The amount to increase each value along the length of the path.
 	 */
-	public void Increase(Route route, float amount) {
+	public void increase(Route route, float amount) {
 		for (int i=1; i<route.size(); i++) {
 			int x = route.getLocationIndex(i - 1);
 			int y = route.getLocationIndex(i);
@@ -46,14 +47,48 @@ public class UsageMatrix {
 	/**
 	 * Reduce values within matrix by a small amount.
 	 */
-	public void Reduce() {
+	public void reduce() {
+		reduceByMultiplier(0.98f);
+	}
+
+	/**
+	 * Reduce values within matrix by a specific amount.
+	 * @param amount The amount to subtract from each usage value.
+	 */
+	public void reduceFixedAmount(float amount) {
+		assert amount > 0;
+		float count = 0;
 		maxUsage = 1;
 		for (int x=0; x<size; x++) {
 			for (int y=x+1; y<size; y++) {
-				usage[x][y] *= 0.9;
-				if (maxUsage < usage[x][y]) maxUsage = usage[x][y];
+				float u = Math.max(usage[x][y] - amount, 0);
+				usage[x][y] = u;
+				if (maxUsage < u) maxUsage = usage[x][y];
+				averageUsage += u * u;
+				count++;
 			}
 		}
+		averageUsage = (float)Math.sqrt(averageUsage / count);
+	}
+
+	/**
+	 * Reduce values within matrix by a multiplier amount.
+	 * @param amount The amount to subtract from each usage value.
+	 */
+	public void reduceByMultiplier(float multiplier) {
+		assert (0 <= multiplier) && (multiplier <= 1);
+		float count = 0;
+		maxUsage = 1;
+		for (int x=0; x<size; x++) {
+			for (int y=x+1; y<size; y++) {
+				float u = usage[x][y] * multiplier;
+				usage[x][y] = u;
+				if (maxUsage < u) maxUsage = usage[x][y];
+				averageUsage += u * u;
+				count++;
+			}
+		}
+		averageUsage = (float)Math.sqrt(averageUsage / count);
 	}
 
 	/**
@@ -88,8 +123,17 @@ public class UsageMatrix {
 	public float getMaxUsage() {
 		return maxUsage;
 	}
+
+	/**
+	 * Get the average usage value contained within the matrix.
+	 * @return The average of all usage values.
+	 */
+	public float getAverageUsage() {
+		return averageUsage;
+	}
 	
 	private float[][] usage;
 	private int size;
 	private float maxUsage;
+	private float averageUsage;
 }

@@ -15,6 +15,16 @@ public class Route {
 	}
 
 	/**
+	 * Route copy constructor.
+	 * @param src The route to copy.
+	 */
+	public Route(Route src) {
+		distanceMatrix = src.distanceMatrix;
+		location = new IntegerList(src.location);
+		travelDistance = src.travelDistance;
+	}
+
+	/**
 	 * Get the reference distance matrix
 	 * @return Reference to the distance matrix.
 	 */
@@ -45,7 +55,7 @@ public class Route {
 	public void add(int locationIndex) {
 		assert (0 <= locationIndex) && (locationIndex < distanceMatrix.size());
 		if (!location.isEmpty()) {
-			int last = location.get(location.size());
+			int last = location.get(location.size() - 1);
 			travelDistance += distanceMatrix.getDistance(last, locationIndex);
 		}
 		location.add(locationIndex);
@@ -83,6 +93,19 @@ public class Route {
 	public void clear() {
 		location.clear();
 		travelDistance = 0;
+	}
+
+	/**
+	 * A method to convert this coordinate to a string.
+	 * @return The coordinate in string format.
+	 */
+	@Override
+	public String toString() {
+		String result = "0";
+		for (int i=1; i<location.size(); i++) {
+			result += " -> " + location.get(i);
+		}
+		return result + " : Distance " + travelDistance;
 	}
 	
 	private DistanceMatrix distanceMatrix;

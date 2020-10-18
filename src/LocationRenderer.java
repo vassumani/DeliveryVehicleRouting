@@ -15,6 +15,7 @@ public class LocationRenderer extends JPanel {
 	private final DistanceMatrix distanceMatrix;
 	private final UsageMatrix usageMatrix;
 	private Vector<Route> routes;
+	private Solver solver;
 
 	/**
 	 * Location renderer constructor.
@@ -25,6 +26,8 @@ public class LocationRenderer extends JPanel {
 		distanceMatrix = d;
 		usageMatrix = u;
 		routes = new Vector<Route>();
+		solver = new Solver(d, u);
+		this.setMinimumSize(new Dimension(50, 50));
 	}
 	
 	/**
@@ -35,6 +38,25 @@ public class LocationRenderer extends JPanel {
 		return routes;
 	}
 	
+	/**
+	 * Draw the location data to the Graphics object.
+	 */
+	@Override
+	protected void paintComponent(Graphics g) {
+		Graphics2D g2D = (Graphics2D)g;
+		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
+		drawGrid(g2D, scale);
+		drawUsage(g2D, scale);
+		/*
+		float h = 0;
+		for (Route r : routes) {
+			drawRoute(g2D, scale, r, Color.getHSBColor(h, 1, 0.9f));
+			h += 0.2;
+		}
+		*/
+		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0, 1, 0.9f));
+		drawLocations(g2D, scale);
+	}
 
 	/**
 	 * A private class used to calculate scale and offset of locations for rendering.
@@ -53,6 +75,14 @@ public class LocationRenderer extends JPanel {
 		 */
 		public ScaleOffset(Dimension panelSize, DistanceMatrix dm)  {
 			final int padding = 15;
+			final int minSize = 10;
+			
+			// Make sure panel is not too small
+			if ((panelSize.width < minSize) || (panelSize.height < minSize)) {
+				panelSize = new Dimension(
+					Math.max(panelSize.width, minSize),
+					Math.max(panelSize.height, minSize));
+			}
 			
 			// Calculate distance matrix area along access
 			AABB aabb = dm.getLocationAABB();
@@ -80,23 +110,6 @@ public class LocationRenderer extends JPanel {
 	}
 	
 	/**
-	 * Draw the location data to the Graphics object.
-	 */
-	@Override
-	protected void paintComponent(Graphics g) {
-		Graphics2D g2D = (Graphics2D)g;
-		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
-		drawGrid(g2D, scale);
-		drawUsage(g2D, scale);
-		float h = 0;
-		for (Route r : routes) {
-			drawRoute(g2D, scale, r, Color.getHSBColor(h, 1, 0.9f));
-			h += 0.2;
-		}
-		drawLocations(g2D, scale);
-	}
-	
-	/**
 	 * Draw a regular grid on the panel.
 	 * @param g The target graphics object.
 	 * @param size The size of the target graphics object.
@@ -105,21 +118,21 @@ public class LocationRenderer extends JPanel {
 		final int targetGridSize = 50;
 
 		// Get number of lines to draw
-		int xMax = scale.size.width / targetGridSize;
-		int yMax = scale.size.height / targetGridSize;
+		int xMax = (int)((float)scale.size.width / targetGridSize);
+		int yMax = (int)((float)scale.size.height / targetGridSize);
 		
 		// Get spacing between lines
-		int xStep = scale.size.width / xMax;
-		int yStep = scale.size.height / yMax;
+		float xStep = (float)scale.size.width / xMax;
+		float yStep = (float)scale.size.height / yMax;
 		
 		// Draw lines
-		g.setColor(Color.getHSBColor(0, 0, 0.8f));
+		g.setColor(Color.getHSBColor(0, 0, 0.85f));
 		g.setStroke(new BasicStroke(1));
 		for (int x=1; x<xMax; x++) {
-			g.drawLine(x * xStep, 0, x * xStep, scale.size.height);
+			g.drawLine((int)(x * xStep), 0, (int)(x * xStep), scale.size.height);
 		}
 		for (int y=1; y<yMax; y++) {
-			g.drawLine(0, y * yStep, scale.size.width, y * yStep);
+			g.drawLine(0, (int)(y * yStep), scale.size.width, (int)(y * yStep));
 		}
 	}
 
@@ -160,12 +173,13 @@ public class LocationRenderer extends JPanel {
 	private void drawUsage(Graphics2D g, ScaleOffset scale) {
 		g.setStroke(new BasicStroke(1));
 		final int size = usageMatrix.size();
-		final float maxUsage = usageMatrix.getMaxUsage();
+		final float maxUsage = Math.max(usageMatrix.getMaxUsage(), 0.0001f);
+		
 		for (int x=0; x<size; x++) {
 			for (int y=x+1; y<size; y++) {
-				float usage = usageMatrix.getUsage(x, y);
-				if (usage > 0.01) {
-					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage / maxUsage), 1f - (0.2f * usage / maxUsage)));
+				float usage = usageMatrix.getUsage(x, y) / maxUsage;
+				if (usage > 0.001) {
+					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
 					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
 					Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
 					g.drawLine(
