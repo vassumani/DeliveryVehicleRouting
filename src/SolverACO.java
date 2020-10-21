@@ -11,7 +11,7 @@ public class SolverACO implements Solver {
 	 * @return A calculated route.
 	 */
 	public Route run() {
-		return run(1);
+		return run(100);
 	}
 	
 	/**
@@ -54,17 +54,13 @@ public class SolverACO implements Solver {
 			route.add(0);
 			int lastVisited = 0;
 			
-			// Declare some variables
-			float maxDistance = 0; // Maximum distance between lastVisited and any toVisit[]
-			
 			// Loop until location list is empty
 			while (!toVisit.isEmpty()) {
 				
-				// Find the longest available distance, if not already known
-				if (maxDistance < 1) {
-					for (int i=0; i<toVisit.size(); i++) {
-						maxDistance = Math.max(maxDistance, distanceMatrix.getDistance(lastVisited, toVisit.get(i)));
-					}
+				// Find the longest available distance
+				float maxDistance = 0;
+				for (int i=0; i<toVisit.size(); i++) {
+					maxDistance = Math.max(maxDistance, distanceMatrix.getDistance(lastVisited, toVisit.get(i)));
 				}
 
 				/*
@@ -79,14 +75,15 @@ public class SolverACO implements Solver {
 				// Fill the probability list accordingly
 				float pTotal = 0;
 				for (int i=0; i<toVisit.size(); i++) {
-					float pDistance = 1.0f - (distanceMatrix.getDistance(lastVisited, toVisit.get(i)) / maxDistance);
-					float pUsage = getUsage(lastVisited, toVisit.get(i)) / averageUsage;
+					float pDistance = 1.001f - (distanceMatrix.getDistance(lastVisited, toVisit.get(i)) / maxDistance);
+					float pUsage = Math.max(getUsage(lastVisited, toVisit.get(i)), 0.001f);
 					toVisitProbability[i] = pDistance + pUsage;
 					pTotal += toVisitProbability[i];
 					/*System.out.println(
 						"Trip=" + lastVisited + "->" + toVisit.get(i) +
 						", pDistance=" + pDistance +
-						", pUsage=" + pUsage); //*/
+						", pUsage=" + pUsage +
+						", pTotal=" + toVisitProbability[i]); //*/
 				}
 				
 				// Pick a location
@@ -107,22 +104,23 @@ public class SolverACO implements Solver {
 			// This is for the return trip
 			route.add(0);
 			
-			// Update the rolling average of route scores
 			// Calculate score for this route
-			float score;
-			if (routeScoreAverage == 0) {
-				routeScoreAverage = route.travelDistance();
-				score = 1;
-			} else {
-				routeScoreAverage = (route.travelDistance() + (routeScoreAverage * 99f)) / 100f;
-				score = routeScoreAverage / route.travelDistance();
-				score *= score * score;
-				score -= 1;
+			float score = (float)routeShortestFound / (float)route.travelDistance();
+			score = (score * score * score) * 0.1f;
+
+			// Update the record of the shortest route found thus far
+			if (routeShortestFound > route.travelDistance()) {
+				routeShortestFound = route.travelDistance();
+			} else if (routeShortestFound == 0) {
+				routeShortestFound = route.travelDistance();
+				score = 0.1f;
 			}
 			
+			
+			//System.out.println("Score=" + score + ", Distance=" + route.travelDistance() + ", Shortest=" + routeShortestFound);
+			
 			// Update usage matrix
-			//usageMatrix.reduceFixedAmount(0.0001f * usageMatrix.getAverageUsage());
-			reduceByMultiplier(0.9999f);
+			reduce(0.005f, 0.995f);
 			if (score > 0) increase(route, score);
 
 			// Check if route is acceptable
@@ -144,7 +142,7 @@ public class SolverACO implements Solver {
 	 * @param route The route which defines the path.
 	 * @param amount The amount to increase each value along the length of the path.
 	 */
-	public void increase(Route route, float amount) {
+	private void increase(Route route, float amount) {
 		for (int i=1; i<route.size(); i++) {
 			int x = route.getLocationIndex(i - 1);
 			int y = route.getLocationIndex(i);
@@ -158,50 +156,19 @@ public class SolverACO implements Solver {
 	}
 	
 	/**
-	 * Reduce values within matrix by a small amount.
+	 * Reduce values within the path-usage matrix.
+	 * @param subtract Each value has this amount subtracted.
+	 * @param multiplier Each value is multiplied by this amount.
 	 */
-	public void reduce() {
-		reduceByMultiplier(0.98f);
-	}
-
-	/**
-	 * Reduce values within matrix by a specific amount.
-	 * @param amount The amount to subtract from each usage value.
-	 */
-	public void reduceFixedAmount(float amount) {
-		assert amount > 0;
-		float count = 0;
+	private void reduce(float subtract, float multiplier) {
 		pathUsageHighest = 1;
 		for (int x=0; x<size; x++) {
 			for (int y=x+1; y<size; y++) {
-				float u = Math.max(pathUsage[x][y] - amount, 0);
+				float u = Math.max((pathUsage[x][y] * multiplier) - subtract, 0);
 				pathUsage[x][y] = u;
 				if (pathUsageHighest < u) pathUsageHighest = pathUsage[x][y];
-				averageUsage += u * u;
-				count++;
 			}
 		}
-		averageUsage = (float)Math.sqrt(averageUsage / count);
-	}
-
-	/**
-	 * Reduce values within matrix by a multiplier amount.
-	 * @param amount The amount to subtract from each usage value.
-	 */
-	public void reduceByMultiplier(float multiplier) {
-		assert (0 <= multiplier) && (multiplier <= 1);
-		float count = 0;
-		pathUsageHighest = 1;
-		for (int x=0; x<size; x++) {
-			for (int y=x+1; y<size; y++) {
-				float u = pathUsage[x][y] * multiplier;
-				pathUsage[x][y] = u;
-				if (pathUsageHighest < u) pathUsageHighest = pathUsage[x][y];
-				averageUsage += u * u;
-				count++;
-			}
-		}
-		averageUsage = (float)Math.sqrt(averageUsage / count);
 	}
 
 	/**
@@ -238,14 +205,6 @@ public class SolverACO implements Solver {
 	}
 
 	/**
-	 * Get the average usage value contained within the matrix.
-	 * @return The average of all usage values.
-	 */
-	public float getAverageUsage() {
-		return averageUsage;
-	}
-
-	/**
 	 * Solver constructor.
 	 * @param d Distance matrix used to initialise the usage matrix.
 	 */
@@ -259,8 +218,7 @@ public class SolverACO implements Solver {
 		// Setup general values
 		size = d.size();
 		pathUsageHighest = 1;
-		averageUsage = 1;
-		routeScoreAverage = 0;
+		routeShortestFound = 0;
 
 		// Create a new random number generator
 		rnd = new Random();
@@ -280,7 +238,6 @@ public class SolverACO implements Solver {
 	final private int size;
 	private float[][] pathUsage;
 	private float pathUsageHighest;
-	private float averageUsage;
 	private Random rnd;
-	private float routeScoreAverage;
+	private long routeShortestFound;
 }

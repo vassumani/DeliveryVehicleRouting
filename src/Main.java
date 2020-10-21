@@ -8,12 +8,14 @@ public class Main {
 		
 		// Create working data
 		/*
-		Location[] l = new Location[5];
+		Location[] l = new Location[7];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(5, -2, "1");
 		l[2] = new Location(8, 4, "2");
 		l[3] = new Location(4, 8, "3");
 		l[4] = new Location(-2, 5, "4");
+		l[5] = new Location(2, 3, "5");
+		l[6] = new Location(4, 5, "6");
 		//*/
 		
 		Location[] l = new Location[12];
@@ -30,12 +32,12 @@ public class Main {
 		l[10] = new Location(2, -5, "10");
 		l[11] = new Location(12, -5, "11");
 		//*/
-		//Location[] l = Location.RandomList(50, 20);
+		//Location[] l = Location.RandomList(20, 20);
 		DistanceMatrix d = new DistanceMatrix(l);
 
 		/*
 		SolverACO solver = new SolverACO(d);
-		for (int i=0; i<2; i++) {
+		for (int i=0; i<4; i++) {
 			System.out.println(" --- Attempt " + i + " ---");
 			Route r = solver.run(1);
 			System.out.println(i + ": " + r);
