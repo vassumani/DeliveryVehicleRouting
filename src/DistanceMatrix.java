@@ -88,7 +88,7 @@ public class DistanceMatrix {
 	}
 
 	/**
-	 * Calculates and returns the cost of traveling from location-A to location-B.
+	 * Calculates and returns the cost of travelling from location-A to location-B.
 	 */
 	private long calculate(int locationA, int locationB) {
 		Location a = location[locationA];
