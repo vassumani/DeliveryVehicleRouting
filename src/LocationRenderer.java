@@ -13,20 +13,17 @@ import javax.swing.JPanel;
 @SuppressWarnings("serial")
 public class LocationRenderer extends JPanel {
 	private final DistanceMatrix distanceMatrix;
-	private final UsageMatrix usageMatrix;
 	private Vector<Route> routes;
-	private Solver solver;
+	private SolverACO solverACO;
 
 	/**
 	 * Location renderer constructor.
 	 * @param d The reference distance matrix for this location renderer.
-	 * @param u The usage matrix for this location renderer.
 	 */
-	public LocationRenderer(DistanceMatrix d, UsageMatrix u) {
+	public LocationRenderer(DistanceMatrix d) {
 		distanceMatrix = d;
-		usageMatrix = u;
 		routes = new Vector<Route>();
-		solver = new Solver(d, u);
+		solverACO = new SolverACO(d);
 		this.setMinimumSize(new Dimension(50, 50));
 	}
 	
@@ -46,7 +43,7 @@ public class LocationRenderer extends JPanel {
 		Graphics2D g2D = (Graphics2D)g;
 		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
 		drawGrid(g2D, scale);
-		drawUsage(g2D, scale);
+		//drawUsage(g2D, scale);
 		/*
 		float h = 0;
 		for (Route r : routes) {
@@ -54,8 +51,12 @@ public class LocationRenderer extends JPanel {
 			h += 0.2;
 		}
 		*/
-		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0, 1, 0.9f));
+		drawRoute(g2D, scale, solverACO.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
+		
+		drawUsage(g2D, scale);
+		
 		drawLocations(g2D, scale);
+		
 	}
 
 	/**
@@ -172,12 +173,12 @@ public class LocationRenderer extends JPanel {
 	 */
 	private void drawUsage(Graphics2D g, ScaleOffset scale) {
 		g.setStroke(new BasicStroke(1));
-		final int size = usageMatrix.size();
-		final float maxUsage = Math.max(usageMatrix.getMaxUsage(), 0.0001f);
+		final int size = solverACO.size();
+		final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
 		
 		for (int x=0; x<size; x++) {
 			for (int y=x+1; y<size; y++) {
-				float usage = usageMatrix.getUsage(x, y) / maxUsage;
+				float usage = solverACO.getUsage(x, y) / maxUsage;
 				if (usage > 0.001) {
 					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
 					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);

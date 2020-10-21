@@ -15,9 +15,8 @@ public class Gui extends JFrame {
 	/**
 	 * Default constructor.
 	 * @param d Distance matrix to be rendered.
-	 * @param u Usage matrix to be rendered.
 	 */
-	public Gui(DistanceMatrix d, UsageMatrix u) {
+	public Gui(DistanceMatrix d) {
 		
 		// Set a timer to refresh the screen from time to time
 		refreshTimer = new Timer(true);
@@ -26,14 +25,14 @@ public class Gui extends JFrame {
 			public void run() {
 				repaint();
 			}
-		}, 17, 17);
+		}, 50, 50);
 		
 		// Create buttons
 		button1 = new JButton("Button1");
 		button2 = new JButton("Button2");
 
 		// Setup location panel
-		locationPanel = new LocationRenderer(d, u);
+		locationPanel = new LocationRenderer(d);
 
 		// Setup button panel
 		buttonPanel = new JPanel();
@@ -61,13 +60,12 @@ public class Gui extends JFrame {
 	 * Start the main GUI.
 	 * Do this via the event queue to ensure that the action is taken within the correct thread.
 	 * @param d Distance matrix to be rendered.
-	 * @param u Usage matrix to be rendered.
 	 */
-	static public void create(DistanceMatrix d, UsageMatrix u) {
+	static public void create(DistanceMatrix d) {
 		EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new Gui(d, u).setVisible(true);
+				new Gui(d).setVisible(true);
 			}
 		});
 	}

@@ -9,14 +9,14 @@ public class Main {
 		// Create working data
 		/*
 		Location[] l = new Location[5];
-		l[0] = new Location(0, 0, "1");
-		l[1] = new Location(-5, 0, "2");
-		l[2] = new Location(15, 0, "3");
-		l[3] = new Location(0, -5, "4");
-		l[4] = new Location(0, 15, "5");
+		l[0] = new Location(0, 0, "0");
+		l[1] = new Location(5, -2, "1");
+		l[2] = new Location(8, 4, "2");
+		l[3] = new Location(4, 8, "3");
+		l[4] = new Location(-2, 5, "4");
 		//*/
-		/*
-		Location[] l = new Location[10];
+		
+		Location[] l = new Location[12];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(-10, 5, "1");
 		l[2] = new Location(15, 0, "2");
@@ -27,22 +27,25 @@ public class Main {
 		l[7] = new Location(5, 15, "7");
 		l[8] = new Location(-5, 15, "8");
 		l[9] = new Location(10, -10, "9");
+		l[10] = new Location(2, -5, "10");
+		l[11] = new Location(12, -5, "11");
 		//*/
-		Location[] l = Location.RandomList(50, 20);
+		//Location[] l = Location.RandomList(50, 20);
 		DistanceMatrix d = new DistanceMatrix(l);
-		UsageMatrix u = new UsageMatrix(d);
-		
+
 		/*
-		for (int i=0; i<1; i++) {
-			Solver solver = new Solver(d, u);
-			Route r = solver.run();
+		SolverACO solver = new SolverACO(d);
+		for (int i=0; i<2; i++) {
+			System.out.println(" --- Attempt " + i + " ---");
+			Route r = solver.run(1);
 			System.out.println(i + ": " + r);
+			System.out.println();
 		}
 		//*/
 		
 		// Start GUI
 		// This will start use a secondary event thread
-		Gui.create(d, u);
+		Gui.create(d);
 		
 		// Thread used for main() ends here
 		// Program will continue because there is another thread still running
