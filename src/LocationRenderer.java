@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 public class LocationRenderer extends JPanel {
 	private final DistanceMatrix distanceMatrix;
 	private Vector<Route> routes;
-	private SolverACO solverACO;
+	private Solver solver;
 
 	/**
 	 * Location renderer constructor.
@@ -23,7 +23,7 @@ public class LocationRenderer extends JPanel {
 	public LocationRenderer(DistanceMatrix d) {
 		distanceMatrix = d;
 		routes = new Vector<Route>();
-		solverACO = new SolverACO(d);
+		solver = new SolverGA(d);
 		this.setMinimumSize(new Dimension(50, 50));
 	}
 	
@@ -51,7 +51,7 @@ public class LocationRenderer extends JPanel {
 			h += 0.2;
 		}
 		*/
-		drawRoute(g2D, scale, solverACO.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
+		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
 		
 		drawUsage(g2D, scale);
 		
@@ -172,30 +172,33 @@ public class LocationRenderer extends JPanel {
 	 * @param size The size of the target graphics object.
 	 */
 	private void drawUsage(Graphics2D g, ScaleOffset scale) {
-		g.setStroke(new BasicStroke(1));
-		final int size = solverACO.size();
-		final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
-		for (int x=0; x<size; x++) {
-			for (int y=x+1; y<size; y++) {
-				float usage = Math.max(solverACO.getUsage(x, y), solverACO.getUsage(y, x)) / maxUsage;
-				if (usage > 0.001) {
-					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
-					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
-					Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
-					g.drawLine(
-						(int)a.x,
-						(int)a.y,
-						(int)b.x,
-						(int)b.y);
-					if (usage > 0.3f) {
-						g.drawString(String.format("%.2f-%.2f", solverACO.getUsage(x, y), solverACO.getUsage(y, x)), (a.x + b.x) / 2, (a.y + b.y) / 2);
+		if (solver instanceof SolverACO) {
+			SolverACO solverACO = (SolverACO)solver;
+			g.setStroke(new BasicStroke(1));
+			final int size = solverACO.size();
+			final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
+			for (int x=0; x<size; x++) {
+				for (int y=x+1; y<size; y++) {
+					float usage = Math.max(solverACO.getUsage(x, y), solverACO.getUsage(y, x)) / maxUsage;
+					if (usage > 0.001) {
+						g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
+						Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
+						Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
+						g.drawLine(
+							(int)a.x,
+							(int)a.y,
+							(int)b.x,
+							(int)b.y);
+						if (usage > 0.3f) {
+							g.drawString(String.format("%.2f-%.2f", solverACO.getUsage(x, y), solverACO.getUsage(y, x)), (a.x + b.x) / 2, (a.y + b.y) / 2);
+						}
 					}
 				}
 			}
+			g.setColor(Color.BLACK);
+			g.drawString("MaxUsage="+solverACO.getMaxUsage(), 5, scale.size.height - 5);
+			g.drawString("AverageDistance="+solverACO.getAverageDistance(), 5, scale.size.height - 20);
 		}
-		g.setColor(Color.BLACK);
-		g.drawString("MaxUsage="+solverACO.getMaxUsage(), 5, scale.size.height - 5);
-		g.drawString("AverageDistance="+solverACO.getAverageDistance(), 5, scale.size.height - 20);
 	}
 	
 	/**

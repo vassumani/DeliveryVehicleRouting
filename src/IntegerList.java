@@ -87,12 +87,13 @@ public class IntegerList {
 	}
 
 	/**
-	 * Remove a value from the end of the list.
+	 * Remove a value from the end of the list and return it.
 	 * The list must not be empty.
+	 * @return The value which was removed from the list.
 	 */
-	public void pop() {
+	public int pop() {
 		assert used > 0;
-		used--;
+		return data[--used];
 	}
 	
 	/**
@@ -113,6 +114,31 @@ public class IntegerList {
 	public int get(int index) {
 		assert index < used;
 		return data[index];
+	}
+	
+	/**
+	 * Find the location of the first matching value within the list.
+	 * @param value Value to search for.
+	 * @return Index of the value, or -1 if not found.
+	 */
+	public int find(int value) {
+		for (int i=0; i<used; i++) {
+			if (data[i] == value) return i;
+		}
+		return -1;
+	}
+
+	/**
+	 * Find the location of the first matching value within the list.
+	 * @param value Value to search for.
+	 * @param startIndex Index at which to start searching.
+	 * @return Index of the value, or -1 if not found.
+	 */
+	public int find(int value, int startIndex) {
+		for (int i=startIndex; i<used; i++) {
+			if (data[i] == value) return i;
+		}
+		return -1;
 	}
 	
 	/**

@@ -12,6 +12,7 @@ public class Route {
 		distanceMatrix = d;
 		location = new IntegerList();
 		travelDistance = 0;
+		location.reserve(d.size() + 1);
 	}
 
 	/**
@@ -59,6 +60,15 @@ public class Route {
 			travelDistance += distanceMatrix.getDistance(last, locationIndex);
 		}
 		location.add(locationIndex);
+	}
+
+	/**
+	 * Set the distance matrix index of a location at a given index within the route.
+	 * @param index Index within the route.
+	 * @param locationIndex Location index within the distance matrix.
+	 */
+	public void setLocationIndex(int index, int locationIndex) {
+		location.set(index, locationIndex);
 	}
 	
 	/**
