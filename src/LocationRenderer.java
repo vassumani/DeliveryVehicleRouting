@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 public class LocationRenderer extends JPanel {
 	private final DistanceMatrix distanceMatrix;
 	private Vector<Route> routes;
-	private SolverACO solverACO;
+	private Solver solver;
 
 	/**
 	 * Location renderer constructor.
@@ -23,7 +23,7 @@ public class LocationRenderer extends JPanel {
 	public LocationRenderer(DistanceMatrix d) {
 		distanceMatrix = d;
 		routes = new Vector<Route>();
-		solverACO = new SolverACO(d);
+		solver = new SolverGA(d);
 		this.setMinimumSize(new Dimension(50, 50));
 	}
 	
@@ -51,9 +51,13 @@ public class LocationRenderer extends JPanel {
 			h += 0.2;
 		}
 		*/
-		drawRoute(g2D, scale, solverACO.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
+		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
 		
-		drawUsage(g2D, scale);
+		if (solver instanceof SolverACO) {
+			drawUsage(g2D, scale, (SolverACO)solver);
+		} else if (solver instanceof SolverGA) {
+			drawGenome(g2D, scale, (SolverGA)solver);
+		}
 		
 		drawLocations(g2D, scale);
 		
@@ -170,8 +174,9 @@ public class LocationRenderer extends JPanel {
 	 * Draw to the the panel the path usage between all locations.
 	 * @param g The target graphics object.
 	 * @param size The size of the target graphics object.
+	 * @param solverACO The solver used.
 	 */
-	private void drawUsage(Graphics2D g, ScaleOffset scale) {
+	private void drawUsage(Graphics2D g, ScaleOffset scale, SolverACO solverACO) {
 		g.setStroke(new BasicStroke(1));
 		final int size = solverACO.size();
 		final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
@@ -196,6 +201,19 @@ public class LocationRenderer extends JPanel {
 		g.setColor(Color.BLACK);
 		g.drawString("MaxUsage="+solverACO.getMaxUsage(), 5, scale.size.height - 5);
 		g.drawString("AverageDistance="+solverACO.getAverageDistance(), 5, scale.size.height - 20);
+	}
+
+	/**
+	 * Draw to the the panel the path usage between all locations.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
+	 * @param solverACO The solver used.
+	 */
+	private void drawGenome(Graphics2D g, ScaleOffset scale, SolverGA solverGA) {
+		g.setColor(Color.BLACK);
+		for (int i=0; i<SolverGA.parentMax; i++) {
+			g.drawString("P"+i+": "+solverGA.getParentString(i), 5, scale.size.height - 5 - (20 * i));
+		}
 	}
 	
 	/**

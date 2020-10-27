@@ -204,7 +204,7 @@ public class SolverACO implements Solver {
 
 	/**
 	 * Solver constructor.
-	 * @param d Distance matrix used to initialise the usage matrix.
+	 * @param d Distance matrix used to initialise the solver.
 	 */
 	public SolverACO(DistanceMatrix d) {
 		assert d != null;

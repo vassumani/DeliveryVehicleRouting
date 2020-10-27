@@ -17,7 +17,7 @@ public class Main {
 		l[5] = new Location(2, 3, "5");
 		l[6] = new Location(4, 5, "6");
 		//*/
-		
+		/*
 		Location[] l = new Location[12];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(-10, 5, "1");
@@ -32,7 +32,7 @@ public class Main {
 		l[10] = new Location(2, -5, "10");
 		l[11] = new Location(12, -5, "11");
 		//*/
-		/*
+		
 		Location[] l = new Location[16];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(-10, 5, "1");
@@ -51,12 +51,12 @@ public class Main {
 		l[14] = new Location(-2, 8, "14");
 		l[15] = new Location(10, 10, "15");
 		//*/
-		//Location[] l = Location.RandomList(20, 20);
+		//Location[] l = Location.RandomList(40, 20);
 		DistanceMatrix d = new DistanceMatrix(l);
 
 		/*
-		SolverACO solver = new SolverACO(d);
-		for (int i=0; i<4; i++) {
+		Solver solver = new SolverGA(d);
+		for (int i=0; i<5; i++) {
 			System.out.println(" --- Attempt " + i + " ---");
 			Route r = solver.run(1);
 			System.out.println(i + ": " + r);

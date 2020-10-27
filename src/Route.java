@@ -12,6 +12,7 @@ public class Route {
 		distanceMatrix = d;
 		location = new IntegerList();
 		travelDistance = 0;
+		location.reserve(d.size() + 1);
 	}
 
 	/**
@@ -60,6 +61,39 @@ public class Route {
 		}
 		location.add(locationIndex);
 	}
+
+	/**
+	 * Set the distance matrix index of a location at a given index within the route.
+	 * @param index Index within the route.
+	 * @param locationIndex Location index within the distance matrix.
+	 */
+	public void setLocationIndex(int index, int locationIndex) {
+		
+		// Get old index
+		int oldLocation = location.get(index);
+		if (oldLocation != locationIndex) {
+			
+			// Get previous and next location, if any
+			final int invalid = -1;
+			int prevLocation = (index > 0) ? location.get(index - 1) : invalid;
+			int nextLocation = (index < (location.size() - 1)) ? location.get(index + 1) : invalid;
+
+			// Update location list
+			location.set(index, locationIndex);
+			
+			// Update cost from previous location
+			if (prevLocation != invalid) {
+				travelDistance +=
+					distanceMatrix.getDistance(prevLocation, locationIndex) -
+					distanceMatrix.getDistance(prevLocation, oldLocation);
+			}
+			if (nextLocation != invalid) {
+				travelDistance +=
+						distanceMatrix.getDistance(locationIndex, nextLocation) -
+						distanceMatrix.getDistance(oldLocation, nextLocation);
+			}
+		}
+	}
 	
 	/**
 	 * Get the distance matrix index of a location for a given index within the route.
@@ -101,7 +135,7 @@ public class Route {
 	 */
 	@Override
 	public String toString() {
-		String result = "0";
+		String result = Integer.toString(location.get(0));
 		for (int i=1; i<location.size(); i++) {
 			result += " -> " + location.get(i);
 		}
