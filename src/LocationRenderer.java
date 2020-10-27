@@ -53,7 +53,11 @@ public class LocationRenderer extends JPanel {
 		*/
 		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
 		
-		drawUsage(g2D, scale);
+		if (solver instanceof SolverACO) {
+			drawUsage(g2D, scale, (SolverACO)solver);
+		} else if (solver instanceof SolverGA) {
+			drawGenome(g2D, scale, (SolverGA)solver);
+		}
 		
 		drawLocations(g2D, scale);
 		
@@ -170,34 +174,45 @@ public class LocationRenderer extends JPanel {
 	 * Draw to the the panel the path usage between all locations.
 	 * @param g The target graphics object.
 	 * @param size The size of the target graphics object.
+	 * @param solverACO The solver used.
 	 */
-	private void drawUsage(Graphics2D g, ScaleOffset scale) {
-		if (solver instanceof SolverACO) {
-			SolverACO solverACO = (SolverACO)solver;
-			g.setStroke(new BasicStroke(1));
-			final int size = solverACO.size();
-			final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
-			for (int x=0; x<size; x++) {
-				for (int y=x+1; y<size; y++) {
-					float usage = Math.max(solverACO.getUsage(x, y), solverACO.getUsage(y, x)) / maxUsage;
-					if (usage > 0.001) {
-						g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
-						Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
-						Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
-						g.drawLine(
-							(int)a.x,
-							(int)a.y,
-							(int)b.x,
-							(int)b.y);
-						if (usage > 0.3f) {
-							g.drawString(String.format("%.2f-%.2f", solverACO.getUsage(x, y), solverACO.getUsage(y, x)), (a.x + b.x) / 2, (a.y + b.y) / 2);
-						}
+	private void drawUsage(Graphics2D g, ScaleOffset scale, SolverACO solverACO) {
+		g.setStroke(new BasicStroke(1));
+		final int size = solverACO.size();
+		final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
+		for (int x=0; x<size; x++) {
+			for (int y=x+1; y<size; y++) {
+				float usage = Math.max(solverACO.getUsage(x, y), solverACO.getUsage(y, x)) / maxUsage;
+				if (usage > 0.001) {
+					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
+					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
+					Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
+					g.drawLine(
+						(int)a.x,
+						(int)a.y,
+						(int)b.x,
+						(int)b.y);
+					if (usage > 0.3f) {
+						g.drawString(String.format("%.2f-%.2f", solverACO.getUsage(x, y), solverACO.getUsage(y, x)), (a.x + b.x) / 2, (a.y + b.y) / 2);
 					}
 				}
 			}
-			g.setColor(Color.BLACK);
-			g.drawString("MaxUsage="+solverACO.getMaxUsage(), 5, scale.size.height - 5);
-			g.drawString("AverageDistance="+solverACO.getAverageDistance(), 5, scale.size.height - 20);
+		}
+		g.setColor(Color.BLACK);
+		g.drawString("MaxUsage="+solverACO.getMaxUsage(), 5, scale.size.height - 5);
+		g.drawString("AverageDistance="+solverACO.getAverageDistance(), 5, scale.size.height - 20);
+	}
+
+	/**
+	 * Draw to the the panel the path usage between all locations.
+	 * @param g The target graphics object.
+	 * @param size The size of the target graphics object.
+	 * @param solverACO The solver used.
+	 */
+	private void drawGenome(Graphics2D g, ScaleOffset scale, SolverGA solverGA) {
+		g.setColor(Color.BLACK);
+		for (int i=0; i<SolverGA.parentMax; i++) {
+			g.drawString("P"+i+": "+solverGA.getParentString(i), 5, scale.size.height - 5 - (20 * i));
 		}
 	}
 	

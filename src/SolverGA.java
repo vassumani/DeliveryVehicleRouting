@@ -6,6 +6,22 @@ import java.util.Random;
 public class SolverGA implements Solver {
 
 	/**
+	 * The number of parent routes which are mixed together to create new candidate routes.
+	 */
+	static final public int parentMax = 6;
+	
+	/**
+	 * Number of candidate routes to generate when making new routes.
+	 */
+	static final public int newCandidateCount = 20;
+
+	/**
+	 * Number of completely random parent routes to add when checking candidates.
+	 * This value must be less than parentMax.
+	 */
+	static final public int newRandomParents = 1;
+	
+	/**
 	 * Calculate and return a route.
 	 * The returned route may not initially be optimal but should get better each run.
 	 * @return A calculated route.
@@ -22,21 +38,48 @@ public class SolverGA implements Solver {
 	 */
 	public Route run(int iterations) {
 
+		// Create list to hold candidate routes
+		Route[] candidate = new Route[newCandidateCount + parentMax];
+
 		// Loop for the requested number of iterations
 		// A new route will be calculated on each iteration
 		for (int it=0; it<iterations; it++) {
+
+			// Generate and store new candidate routes
+			for (int c=0; c<newCandidateCount; c++) {
+				candidate[c] = generateChild(parent[c % parentMax], parent[(c + 1) % parentMax]);
+			}
+		
+			// Add parent routes to candidate list
+			for (int p=0; p<parentMax; p++) {
+				candidate[newCandidateCount + p] = parent[p];
+			}
+
+			//for (int c=0; c<candidate.length; c++) System.out.println("  Candidate["+c+"]: "+candidate[c]);
 			
-			Route child = generateChild(parent[0], parent[1]);
-			if (parent[0].travelDistance() > parent[1].travelDistance()) {
-				if (parent[0].travelDistance() > child.travelDistance()) {
-					parent[0] = child;
+			// Loop through candidate list and find best options
+			// Record best options within parent list
+			for (int p=0; p<(parentMax - newRandomParents); p++) {
+				
+				// Find best candidate
+				int best = p;
+				for (int c=p+1; c<candidate.length; c++) {
+					if (candidate[c].travelDistance() < candidate[best].travelDistance()) {
+						best = c;
+					}
 				}
-			} else {
-				if (parent[1].travelDistance() > child.travelDistance()) {
-					parent[1] = child;
-				}
+				
+				// Record best candidate in parent list
+				// Overwrite removed entry with something else
+				parent[p] = candidate[best];
+				candidate[best] = candidate[p];
+				//System.out.println("  Parent["+p+"]: "+parent[p]);
 			}
 			
+			// Add random parents to the parent list
+			for (int p=parentMax-newRandomParents; p<parentMax; p++) {
+				parent[p] = generateRandom();
+			}
 		}
 		
 		// Record route
@@ -49,6 +92,12 @@ public class SolverGA implements Solver {
 		return new Route(result);
 	}
 	
+	/**
+	 * Generate a child route using two parent routes.
+	 * @param parentA A parent route.
+	 * @param parentB A parent route.
+	 * @return A newly generated route.
+	 */
 	private Route generateChild(Route parentA, Route parentB) {
 		assert parentA != null;
 		assert parentB != null;
@@ -60,15 +109,17 @@ public class SolverGA implements Solver {
 		// Create child route
 		Route child = new Route(distanceMatrix);
 
-		// Create a list containing all locations, except location 0
-		IntegerList allLocations = new IntegerList();
-		allLocations.reserve(n);
-		for (int i=1; i<n; i++) allLocations.add(i);
-		
-		// Calculate locations of crossover point
+		// Calculate crossover point for child
+		// The child will consist of data from parent-A before the crossover, and parent-B after the crossover
 		int c = 1 + rnd.nextInt(parentA.size() - 2);
 
+		// Create a list containing all locations
+		IntegerList allLocations = new IntegerList();
+		allLocations.reserve(n);
+		for (int i=0; i<n; i++) allLocations.add(i);
+		
 		// Copy values from parent-A, up to crossover point
+		// Also remove the visited locations from the location list
 		for (int i=0; i<c; i++) {
 			int locationIndex = parentA.getLocationIndex(i);
 			
@@ -76,10 +127,21 @@ public class SolverGA implements Solver {
 			child.add(locationIndex);
 			
 			// Remove location from list of all locations
-			allLocations.removeUnordered(allLocations.find(locationIndex));
+			int toRemove = allLocations.find(locationIndex);
+			if (toRemove != -1) allLocations.removeUnordered(toRemove);
+		}
+		
+		// Make a copy of the location list
+		// Remove the locations from parent-B which are after the crossover point
+		// Whatever locations are left have been missed (not in first part of parent-A, or second part of parent-B)
+		IntegerList missedLocations = new IntegerList(allLocations);
+		for (int i=c; i<parentB.size(); i++) {
+			int toRemove = missedLocations.find(parentB.getLocationIndex(i));
+			if (toRemove != -1) missedLocations.removeUnordered(toRemove);
 		}
 		
 		// Copy values from parent-B, from crossover point onwards
+		// Check for duplicate values and replace them with missed locations
 		for (int i=c; i<parentB.size(); i++) {
 			int locationIndex = parentB.getLocationIndex(i);
 
@@ -102,20 +164,27 @@ public class SolverGA implements Solver {
 					
 					// Remove location from list of all locations
 					allLocations.removeUnordered(allLocations.find(locationIndex));
+					
+				} else {
+					
+					// Add location from missed location list
+					child.add(missedLocations.pop());
 				}
 			}
 		}
 		
 		// Add any locations which are missing
-		while (!allLocations.isEmpty()) {
-			child.add(allLocations.pop());
+		while (!missedLocations.isEmpty()) {
+			child.add(missedLocations.pop());
 		}
 		
 		// Add location 0 to the end of the list
 		child.add(0);
 		
 		// Mutate the list, if required
-		if (rnd.nextFloat() < 0.01) {
+		float mutateThreshold = ((parentA.travelDistance() == parentB.travelDistance()) ? 0.9f : 0.01f);
+		while (rnd.nextFloat() < mutateThreshold) {
+			mutateThreshold *= 0.8f;
 			
 			// Swap two random locations within the list
 			int indexA = 1 + rnd.nextInt(child.size() - 2);
@@ -125,6 +194,13 @@ public class SolverGA implements Solver {
 			child.setLocationIndex(indexA, locationB);
 			child.setLocationIndex(indexB, locationA);
 		}
+		
+		/*
+		System.out.println("  Crossover="+c);
+		System.out.println("  ParentA: "+parentA);
+		System.out.println("  Child:   "+child);
+		System.out.println("  ParentB: "+parentB);
+		//*/
 		
 		// Return result
 		return child;
@@ -159,6 +235,16 @@ public class SolverGA implements Solver {
 		return route;
 	}
 	
+
+	/**
+	 * Get a string version of one of the parent routes.
+	 * @param index Index of the requested parent route.
+	 * @return The route in string form.
+	 */
+	public String getParentString(int index) {
+		return parent[index].toString();
+	}
+	
 	/**
 	 * Solver constructor.
 	 * @param d Distance matrix used to initialise the solver.
@@ -180,7 +266,6 @@ public class SolverGA implements Solver {
 	}
 	
 	final private DistanceMatrix distanceMatrix;
-	final private int parentMax = 2;
 	private Route[] parent;
 	private Random rnd;
 }

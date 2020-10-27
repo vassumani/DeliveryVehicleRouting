@@ -7,7 +7,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		// Create working data
-		
+		/*
 		Location[] l = new Location[7];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(5, -2, "1");
@@ -32,7 +32,7 @@ public class Main {
 		l[10] = new Location(2, -5, "10");
 		l[11] = new Location(12, -5, "11");
 		//*/
-		/*
+		
 		Location[] l = new Location[16];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(-10, 5, "1");
@@ -51,12 +51,12 @@ public class Main {
 		l[14] = new Location(-2, 8, "14");
 		l[15] = new Location(10, 10, "15");
 		//*/
-		//Location[] l = Location.RandomList(20, 20);
+		//Location[] l = Location.RandomList(40, 20);
 		DistanceMatrix d = new DistanceMatrix(l);
 
-		
-		SolverACO solver = new SolverACO(d);
-		for (int i=0; i<4; i++) {
+		/*
+		Solver solver = new SolverGA(d);
+		for (int i=0; i<5; i++) {
 			System.out.println(" --- Attempt " + i + " ---");
 			Route r = solver.run(1);
 			System.out.println(i + ": " + r);
@@ -66,7 +66,7 @@ public class Main {
 		
 		// Start GUI
 		// This will start use a secondary event thread
-		//Gui.create(d);
+		Gui.create(d);
 		
 		// Thread used for main() ends here
 		// Program will continue because there is another thread still running
