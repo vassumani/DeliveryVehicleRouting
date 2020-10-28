@@ -5,78 +5,51 @@ import javax.swing.*;
 
 @SuppressWarnings("serial")
 public class Gui extends JFrame {
-	private final JPanel verticalSplit;
-	private final JPanel buttonPanel;
-	private final LocationRenderer locationPanel;
-	private final JButton button1;
-	private final JButton button2;
-	//private Timer refreshTimer;
-	
+
 	/**
 	 * Default constructor.
-	 * @param d Distance matrix to be rendered.
+	 * @param s The solver thread manager.
 	 */
-	public Gui(DistanceMatrix d) {
+	public Gui(SolverThread s) {
 		
+		// Create buttons
+		JButton buttonLoadLocations = new ButtonLoadLocations(this, s);
+		JButton button2 = new JButton("Button2");
+
+		// Setup location renderer panel
+		JPanel locationPanel = new LocationRenderer(s);
+
+		// Setup control panel
+		JPanel controlPanel = new JPanel();
+		controlPanel.setLayout(new GridLayout(2, 1));
+		controlPanel.add(buttonLoadLocations);
+		controlPanel.add(button2);
+
+		// Setup top split panel
+		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(controlPanel, BorderLayout.WEST);
+		topPanel.add(locationPanel, BorderLayout.CENTER);
+
+		// Setup this JFrame
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setPreferredSize(new Dimension(600,400));
+		getContentPane().setLayout(new GridLayout());
+		getContentPane().add(topPanel);
+		setMinimumSize(new Dimension(100, 100));
+		
+		// Final command before returning
+		pack();
+
 		// Set a timer to refresh the screen from time to time
-		/*
 		refreshTimer = new Timer(true);
 		refreshTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				repaint();
 			}
-		}, 50, 50);
-		*/
-		
-		// Create buttons
-		button1 = new JButton("Button1");
-		button2 = new JButton("Button2");
-
-		// Setup location panel
-		locationPanel = new LocationRenderer(d);
-
-		// Setup button panel
-		buttonPanel = new JPanel();
-		buttonPanel.setLayout(new GridLayout(1, 2));
-		buttonPanel.add(button1);
-		buttonPanel.add(button2);
-
-		// Setup vertical panel
-		verticalSplit = new JPanel(new BorderLayout());
-		verticalSplit.add(buttonPanel, BorderLayout.PAGE_START);
-		verticalSplit.add(locationPanel, BorderLayout.CENTER);
-
-		// Setup this JFrame
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setPreferredSize(new Dimension(600,500));
-		getContentPane().setLayout(new GridLayout());
-		getContentPane().add(verticalSplit);
-		setMinimumSize(new Dimension(100, 100));
-		
-		// Final command before returning
-		pack();
-		
-
-		//JFileChooser fc = new JFileChooser();
-		//fc.showOpenDialog(this);
-		
+		}, 500, 500);
 	}
 	
-	/**
-	 * Start the main GUI.
-	 * Do this via the event queue to ensure that the action is taken within the correct thread.
-	 * @param d Distance matrix to be rendered.
-	 */
-	static public void create(DistanceMatrix d) {
-		EventQueue.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				new Gui(d).setVisible(true);
-			}
-		});
-	}
-
 
 	/* Old code kept as example code for button callback
 	static public JFrame createMainMenu() {
@@ -99,4 +72,6 @@ public class Gui extends JFrame {
 		frame.getContentPane().add(button);
 		return frame;
 	}*/
+	
+	private Timer refreshTimer;
 }

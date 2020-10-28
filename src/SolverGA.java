@@ -22,6 +22,14 @@ public class SolverGA implements Solver {
 	static final public int newRandomParents = 1;
 	
 	/**
+	 * Get the type of solver.
+	 * @return The solver type.
+	 */
+	public SolverType getType() {
+		return SolverType.GA;
+	}
+	
+	/**
 	 * Calculate and return a route.
 	 * The returned route may not initially be optimal but should get better each run.
 	 * @return A calculated route.
@@ -263,6 +271,24 @@ public class SolverGA implements Solver {
 		// Create candidate list
 		parent = new Route[parentMax];
 		for (int i=0; i<parentMax; i++) parent[i] = generateRandom();
+	}
+	
+	/**
+	 * Copy constructor.
+	 */
+	public SolverGA(SolverGA src) {
+		assert src != null;
+
+		// Record the size of the matrix
+		distanceMatrix = src.distanceMatrix;
+		
+		// Create a new random number generator
+		rnd = new Random();
+		rnd.nextFloat(); // Run once
+		
+		// Create candidate list
+		parent = new Route[parentMax];
+		for (int i=0; i<parentMax; i++) parent[i] = new Route(src.parent[i]);
 	}
 	
 	final private DistanceMatrix distanceMatrix;

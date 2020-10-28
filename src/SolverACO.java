@@ -6,6 +6,14 @@ import java.util.Random;
 public class SolverACO implements Solver {
 
 	/**
+	 * Get the type of solver.
+	 * @return The solver type.
+	 */
+	public SolverType getType() {
+		return SolverType.ACO;
+	}
+	
+	/**
 	 * Calculate and return a route.
 	 * The returned route may not initially be optimal but should get better each run.
 	 * @return A calculated route.
@@ -138,7 +146,7 @@ public class SolverACO implements Solver {
 		// Record route
 		return bestRoute;
 	}
-	
+
 	/**
 	 * Get the average distance travelled by the calculated routes.
 	 * @return Average route distance.
@@ -215,7 +223,6 @@ public class SolverACO implements Solver {
 		
 		// Setup general values
 		size = d.size();
-		usageMaxSmallest = 0.001f;
 		usageMax = usageMaxSmallest;
 		routeAverageDistance = 0;
 
@@ -232,10 +239,39 @@ public class SolverACO implements Solver {
 			}
 		}
 	}
+
+	/**
+	 * Copy constructor.
+	 */
+	public SolverACO(SolverACO src) {
+		assert src != null;
+		
+		// Record the size of the matrix
+		distanceMatrix = src.distanceMatrix;
+		
+		// Setup general values
+		size = src.size;
+		usageMax = src.usageMax;
+		routeAverageDistance = src.routeAverageDistance;
+
+		// Create a new random number generator
+		rnd = new Random();
+		rnd.nextFloat(); // Run once
+		
+		// Create a new array for the path-usage matrix
+		// Only the top half of the matrix is used
+		usage = new float[size][size];
+		for (int x=0; x<size; x++) {
+			for (int y=0; y<size; y++) {
+				usage[x][y] = src.usage[x][y];
+			}
+		}
+	}
+	
+	static final private float usageMaxSmallest = 0.001f;
 	
 	final private DistanceMatrix distanceMatrix;
 	final private int size;
-	final private float usageMaxSmallest;
 	private float[][] usage;
 	private float usageMax;
 	private Random rnd;

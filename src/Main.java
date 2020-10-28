@@ -32,7 +32,7 @@ public class Main {
 		l[10] = new Location(2, -5, "10");
 		l[11] = new Location(12, -5, "11");
 		//*/
-		
+		/*
 		Location[] l = new Location[16];
 		l[0] = new Location(0, 0, "0");
 		l[1] = new Location(-10, 5, "1");
@@ -52,7 +52,7 @@ public class Main {
 		l[15] = new Location(10, 10, "15");
 		//*/
 		//Location[] l = Location.RandomList(40, 20);
-		DistanceMatrix d = new DistanceMatrix(l);
+		//DistanceMatrix d = new DistanceMatrix(l);
 
 		/*
 		Solver solver = new SolverGA(d);
@@ -64,12 +64,17 @@ public class Main {
 		}
 		//*/
 		
-		// Start GUI
-		// This will start use a secondary event thread
-		Gui.create(d);
+		// Create and start solver thread
+		SolverThread solver = new SolverThread();
+		solver.start();
 		
-		// Thread used for main() ends here
-		// Program will continue because there is another thread still running
+		// Start and start GUI
+		Gui gui = new Gui(solver);
+		gui.setVisible(true);
+		
+		// The main() thread will end here, however the program will continue
+		// The GUI thread is a non-daemon thread and will keep the Java instance alive
+		// The solver thread is a daemon thread and will stop when the GUI thread does
 	}
 
 }
