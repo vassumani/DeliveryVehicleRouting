@@ -10,7 +10,7 @@ public class Gui extends JFrame {
 	private final LocationRenderer locationPanel;
 	private final JButton button1;
 	private final JButton button2;
-	private Timer refreshTimer;
+	//private Timer refreshTimer;
 	
 	/**
 	 * Default constructor.
@@ -19,6 +19,7 @@ public class Gui extends JFrame {
 	public Gui(DistanceMatrix d) {
 		
 		// Set a timer to refresh the screen from time to time
+		/*
 		refreshTimer = new Timer(true);
 		refreshTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -26,6 +27,7 @@ public class Gui extends JFrame {
 				repaint();
 			}
 		}, 50, 50);
+		*/
 		
 		// Create buttons
 		button1 = new JButton("Button1");
@@ -54,6 +56,11 @@ public class Gui extends JFrame {
 		
 		// Final command before returning
 		pack();
+		
+
+		//JFileChooser fc = new JFileChooser();
+		//fc.showOpenDialog(this);
+		
 	}
 	
 	/**
