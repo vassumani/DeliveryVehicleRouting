@@ -3,8 +3,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.Vector;
-
 import javax.swing.JPanel;
 
 /**
@@ -12,27 +10,17 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class LocationRenderer extends JPanel {
-	private final DistanceMatrix distanceMatrix;
-	private Vector<Route> routes;
-	private Solver solver;
+	private SolverThread solverThread;
+	private DistanceMatrix distanceMatrix;
 
 	/**
 	 * Location renderer constructor.
-	 * @param d The reference distance matrix for this location renderer.
+	 * @param s The solver thread which is managing the solver data.
 	 */
-	public LocationRenderer(DistanceMatrix d) {
-		distanceMatrix = d;
-		routes = new Vector<Route>();
-		solver = new SolverGA(d);
-		this.setMinimumSize(new Dimension(50, 50));
-	}
-	
-	/**
-	 * Access the list of routes to be rendered.
-	 * @param Reference to the actual list used internally.
-	 */
-	public Vector<Route> getRoutes() {
-		return routes;
+	public LocationRenderer(SolverThread s) {
+		solverThread = s;
+		distanceMatrix = s.getDistanceMatrix();
+		setMinimumSize(new Dimension(50, 50));
 	}
 	
 	/**
@@ -40,27 +28,33 @@ public class LocationRenderer extends JPanel {
 	 */
 	@Override
 	protected void paintComponent(Graphics g) {
-		Graphics2D g2D = (Graphics2D)g;
-		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
-		drawGrid(g2D, scale);
-		//drawUsage(g2D, scale);
-		/*
-		float h = 0;
-		for (Route r : routes) {
-			drawRoute(g2D, scale, r, Color.getHSBColor(h, 1, 0.9f));
-			h += 0.2;
-		}
-		*/
-		drawRoute(g2D, scale, solver.run(), Color.getHSBColor(0.3f, 0.5f, 0.9f));
 		
+		// Get fresh data from solver thread
+		distanceMatrix = solverThread.getDistanceMatrix();
+		Solver solver = solverThread.getSolver();
+		Route route = solverThread.getBestRoute();
+		
+		// Get 2D version of graphics handle
+		Graphics2D g2D = (Graphics2D)g;
+		
+		// Calculate scale used to render information to the panel
+		ScaleOffset scale = new ScaleOffset(getSize(), distanceMatrix);
+		
+		// Draw a general grid
+		drawGrid(g2D, scale);
+		
+		// Draw the route used
+		drawRoute(g2D, scale, route, Color.getHSBColor(0.3f, 0.5f, 0.9f));
+		
+		// Draw solver data
 		if (solver instanceof SolverACO) {
 			drawUsage(g2D, scale, (SolverACO)solver);
 		} else if (solver instanceof SolverGA) {
 			drawGenome(g2D, scale, (SolverGA)solver);
 		}
 		
+		// Draw the locations within the distance matrix
 		drawLocations(g2D, scale);
-		
 	}
 
 	/**
