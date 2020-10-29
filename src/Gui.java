@@ -14,7 +14,7 @@ public class Gui extends JFrame {
 		
 		// Create buttons
 		JButton buttonLoadLocations = new ButtonLoadLocations(this, s);
-		JButton button2 = new JButton("Button2");
+		JButton buttonSaveLocations = new ButtonSaveLocations(s);
 
 		// Setup location renderer panel
 		JPanel locationPanel = new LocationRenderer(s);
@@ -23,7 +23,7 @@ public class Gui extends JFrame {
 		JPanel controlPanel = new JPanel();
 		controlPanel.setLayout(new GridLayout(2, 1));
 		controlPanel.add(buttonLoadLocations);
-		controlPanel.add(button2);
+		controlPanel.add(buttonSaveLocations);
 
 		// Setup top split panel
 		JPanel topPanel = new JPanel(new BorderLayout());
