@@ -14,10 +14,16 @@ public class LocationRenderer extends JPanel {
 	private DistanceMatrix distanceMatrix;
 
 	/**
+	 * If true then the solver working will be rendered.
+	 */
+	public boolean showWorking;
+
+	/**
 	 * Location renderer constructor.
 	 * @param s The solver thread which is managing the solver data.
 	 */
 	public LocationRenderer(SolverThread s) {
+		showWorking = false;
 		solverThread = s;
 		distanceMatrix = s.getDistanceMatrix();
 		setMinimumSize(new Dimension(50, 50));
@@ -31,7 +37,7 @@ public class LocationRenderer extends JPanel {
 		
 		// Get fresh data from solver thread
 		distanceMatrix = solverThread.getDistanceMatrix();
-		Solver solver = solverThread.getSolver();
+		Solver solver = showWorking ? solverThread.getSolver() : null;
 		Route route = solverThread.getBestRoute();
 		
 		// Get 2D version of graphics handle
@@ -47,10 +53,12 @@ public class LocationRenderer extends JPanel {
 		drawRoute(g2D, scale, route, Color.getHSBColor(0.3f, 0.5f, 0.9f));
 		
 		// Draw solver data
-		if (solver instanceof SolverACO) {
-			drawUsage(g2D, scale, (SolverACO)solver);
-		} else if (solver instanceof SolverGA) {
-			drawGenome(g2D, scale, (SolverGA)solver);
+		if (solver != null) {
+			if (solver instanceof SolverACO) {
+				drawUsage(g2D, scale, (SolverACO)solver);
+			} else if (solver instanceof SolverGA) {
+				drawGenome(g2D, scale, (SolverGA)solver);
+			}
 		}
 		
 		// Draw the locations within the distance matrix

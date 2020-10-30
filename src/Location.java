@@ -59,7 +59,7 @@ public class Location {
 		for (int i=0; i<count; i++) {
 			long x = rand.nextInt(limit) - range;
 			long y = rand.nextInt(limit) - range;
-			list[i] = new Location(x, y, Integer.toString(i + 1));
+			list[i] = new Location(x, y, Integer.toString(i));
 		}
 		return list;
 	}

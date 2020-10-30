@@ -35,7 +35,7 @@ public class SolverGA implements Solver {
 	 * @return A calculated route.
 	 */
 	public Route run() {
-		return run(100);
+		return run(10);
 	}
 	
 	/**

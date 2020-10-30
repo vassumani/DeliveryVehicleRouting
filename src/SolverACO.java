@@ -19,7 +19,7 @@ public class SolverACO implements Solver {
 	 * @return A calculated route.
 	 */
 	public Route run() {
-		return run(100);
+		return run(10);
 	}
 	
 	/**
