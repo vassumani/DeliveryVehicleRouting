@@ -1,5 +1,7 @@
-import javax.swing.JFileChooser;
 
+/**
+ * Main class, which just contains the main() method.
+ */
 public class Main {
 
 	/**

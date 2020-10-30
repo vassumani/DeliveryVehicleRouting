@@ -11,19 +11,20 @@ public class Gui extends JFrame {
 	 * @param s The solver thread manager.
 	 */
 	public Gui(SolverThread s) {
-		
-		// Create buttons
-		JButton buttonLoadLocations = new ButtonLoadLocations(this, s);
-		JButton buttonSaveLocations = new ButtonSaveLocations(s);
 
 		// Setup location renderer panel
-		JPanel locationPanel = new LocationRenderer(s);
+		LocationRenderer locationPanel = new LocationRenderer(s);
 
 		// Setup control panel
 		JPanel controlPanel = new JPanel();
-		controlPanel.setLayout(new GridLayout(2, 1));
-		controlPanel.add(buttonLoadLocations);
-		controlPanel.add(buttonSaveLocations);
+		controlPanel.setLayout(new GridLayout(7, 1));
+		controlPanel.add(new ButtonRandomLocations(this, s));
+		controlPanel.add(new ButtonLoadLocations(this, s));
+		controlPanel.add(new ButtonSaveLocations(s));
+		controlPanel.add(new ButtonSaveRoute(s));
+		controlPanel.add(new ButtonToggleRunning(s));
+		controlPanel.add(new ButtonToggleWorkings(locationPanel));
+		controlPanel.add(new ButtonToggleSolver(this, s));
 
 		// Setup top split panel
 		JPanel topPanel = new JPanel(new BorderLayout());
@@ -47,7 +48,7 @@ public class Gui extends JFrame {
 			public void run() {
 				repaint();
 			}
-		}, 500, 500);
+		}, 250, 250);
 	}
 	
 

@@ -51,12 +51,12 @@ public class ButtonLoadLocations extends JButton implements ActionListener {
 				File directory = config.getWorkingDirectory();
 				
 				// Create a file filter
-				FileNameExtensionFilter ff = new FileNameExtensionFilter("CSV Files", "csv");
+				FileNameExtensionFilter ffCSV = new FileNameExtensionFilter("CSV Files", "csv");
 				
 				// Create and open file chooser dialog window
 				JFileChooser fc = new JFileChooser();
-				fc.addChoosableFileFilter(ff);
-				fc.setFileFilter(ff);
+				fc.addChoosableFileFilter(ffCSV);
+				fc.setFileFilter(ffCSV);
 				fc.setCurrentDirectory(directory);
 				int result = fc.showOpenDialog(this.getTopLevelAncestor());
 				

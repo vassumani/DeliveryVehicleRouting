@@ -9,7 +9,7 @@ public class SolverThread extends Thread {
 	 */
 	public SolverThread() {
 		paused = true;
-		distanceMatrix = new DistanceMatrix(Location.RandomList(1,  0));
+		distanceMatrix = new DistanceMatrix(Location.RandomList(3,  10));
 		solver = new SolverGA(distanceMatrix);
 		bestRoute = new Route(distanceMatrix);
 		setDaemon(true); // This thread should not stop the program from terminating
@@ -19,6 +19,7 @@ public class SolverThread extends Thread {
 	 * When the thread is started, this is the method which is run.
 	 */
 	public void run() {
+		Solver localSolver;
 		
 		// Run forever
 		// This is a daemon thread and should not keep the program from terminating
@@ -33,17 +34,27 @@ public class SolverThread extends Thread {
 					} catch (Exception e) {
 					}
 					continue; // Go back to top of while loop
+				} else {
+					
+					// Make a copy of the solver to use
+					// Cannot access solver value outside synchronised section
+					localSolver = solver;
 				}
 			}
 			
 			// Run solver
-			Route newRoute = solver.run();
+			// Must not use any values which require synchronisation
+			Route newRoute = localSolver.run();
 			
 			// Check if new route is better than previous
 			// If so then swap it out
-			synchronized(bestRoute) {
-				if (bestRoute.travelDistance() > newRoute.travelDistance()) {
-					bestRoute = newRoute;
+			synchronized(this) {
+				if (localSolver == solver) {
+					if ((bestRoute.travelDistance() >= newRoute.travelDistance()) || (bestRoute.travelDistance() < 1)) {
+						bestRoute = newRoute;
+					}
+				} else {
+					bestRoute = new Route(distanceMatrix);
 				}
 			}
 		}
@@ -87,12 +98,16 @@ public class SolverThread extends Thread {
 			distanceMatrix = dm;
 			switch (solver.getType()) {
 			case ACO:
-				solver = new SolverACO(dm);
+				solver = new SolverACO(distanceMatrix);
 				break;
 			case GA:
-				solver = new SolverGA(dm);
+				solver = new SolverGA(distanceMatrix);
 				break;
+			default:
+				System.out.println("Unknown solver type in SolverThread.setDistanceMatrix");
+				solver = new SolverGA(distanceMatrix);
 			}
+			bestRoute = new Route(distanceMatrix);
 		}
 	}
 
@@ -110,8 +125,22 @@ public class SolverThread extends Thread {
 				case GA:
 					solver = new SolverGA(distanceMatrix);
 					break;
+				default:
+					System.out.println("Unknown solver type in SolverThread.setSolverType");
+					solver = new SolverGA(distanceMatrix);
 				}
+				bestRoute = new Route(distanceMatrix);
 			}
+		}
+	}
+	
+	/**
+	 * Get the current type of solver being used.
+	 * @return Current solver type.
+	 */
+	public SolverType getSolverType() {
+		synchronized(this) {
+			return solver.getType();
 		}
 	}
 	
@@ -120,7 +149,7 @@ public class SolverThread extends Thread {
 	 * @return The current best route.
 	 */
 	public Route getBestRoute() {
-		synchronized(bestRoute) {
+		synchronized(this) {
 			return new Route(bestRoute);
 		}
 	}
@@ -151,7 +180,7 @@ public class SolverThread extends Thread {
 			}
 		}
 	}
-	
+
 	private boolean paused;
 	private DistanceMatrix distanceMatrix;
 	private Solver solver;
