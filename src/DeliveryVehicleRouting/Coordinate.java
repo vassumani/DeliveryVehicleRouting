@@ -1,3 +1,4 @@
+package DeliveryVehicleRouting;
 
 /**
  * Contains coordinate information only.

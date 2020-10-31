@@ -1,3 +1,5 @@
+package DeliveryVehicleRouting;
+
 import jadex.base.PlatformConfiguration;
 import jadex.base.Starter;
 import jadex.bridge.service.IService;
