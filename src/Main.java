@@ -1,3 +1,5 @@
+import jadex.base.PlatformConfiguration;
+import jadex.base.Starter;
 
 /**
  * Main class, which just contains the main() method.
@@ -9,6 +11,14 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
+		// Create the master routing agent and a delivery agent
+        PlatformConfiguration platformConfig = PlatformConfiguration.getDefaultNoGui();
+        platformConfig.addComponent(MasterRoutingAgent.class);
+        platformConfig.addComponent(DeliveryAgent.class);
+        platformConfig.addComponent(DeliveryAgent.class);
+        Starter.createPlatform(platformConfig).get();
+        
+		/*
 		// Create and start solver thread
 		SolverThread solver = new SolverThread();
 		solver.start();
