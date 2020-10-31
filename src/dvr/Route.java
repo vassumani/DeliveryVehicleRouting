@@ -1,3 +1,4 @@
+package dvr;
 
 /**
  * Contains a list of locations to be visited.

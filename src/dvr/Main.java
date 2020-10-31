@@ -1,3 +1,5 @@
+package dvr;
+
 import jadex.base.PlatformConfiguration;
 import jadex.base.Starter;
 

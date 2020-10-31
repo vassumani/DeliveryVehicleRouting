@@ -1,3 +1,4 @@
+package dvr;
 
 public interface Solver {
 

@@ -1,3 +1,4 @@
+package dvr;
 
 /**
  * Contains coordinate information only.

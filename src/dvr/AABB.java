@@ -1,3 +1,4 @@
+package dvr;
 
 /**
  * Axis Aligned Bounding Box. Provides the minimum and maximum coordinate used to bound the area.
