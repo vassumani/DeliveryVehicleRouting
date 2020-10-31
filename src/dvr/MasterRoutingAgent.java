@@ -1,7 +1,6 @@
 package dvr;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
 import jadex.base.PlatformConfiguration;
 import jadex.base.Starter;
 import jadex.bridge.IInternalAccess;
@@ -23,22 +22,37 @@ import jadex.micro.annotation.*;
 public class MasterRoutingAgent implements IRoutingService {
 	
 	/**
-	 * Subscribe to the routing service.
-	 * All subscribers will periodically receive updated routing information.
+	 * Subscribe to the master routing agent to receive routing information.
+	 * This is used by delivery agents to inform the master that they exist.
+	 * @param capacity Number of items the delivery agent can deliver as once.
 	 */
-    public ISubscriptionIntermediateFuture<String> subscribe() {
-    	SubscriptionIntermediateFuture<String> result = new SubscriptionIntermediateFuture<String>();
+    public ISubscriptionIntermediateFuture<String> registerVehicle(int capacity) {
+
+        // Add the capacity of the new vehicle
+    	// Get the assigned vehicle index
+    	int index = solver.addVehicle(capacity);
     	
-        // Add the new subscription to the list of subscriptions.
-        subscriptions.add(result);
-        
+    	// Record the new vehicle data
+    	System.out.println("MasterRoutingAgent received new delivery agent [" + index + "], capacity " + capacity);
+    	Vehicle vehicle = new Vehicle(capacity, index);
+    	vehicles.add(vehicle);
+    	
+    	// Get result which will be returned from method
+    	SubscriptionIntermediateFuture<String> result = vehicle.subscriber;
+    	
         // Set a termination command to the result
         // This command will run if the subscription ends for some reason,
         // either due to an error or from the agent being shutdown. 
         result.setTerminationCommand(new TerminationCommand() {
             public void terminated(Exception reason) {
                 System.out.println("removed subscriber due to: "+reason);
-                subscriptions.remove(result);
+                for (int i=0; i<vehicles.size();) {
+                	if (vehicles.get(i).subscriber == result) {
+                		vehicles.remove(i);
+                	} else {
+                		i++;
+                	}
+                }
             }
         });
         return result;
@@ -51,10 +65,9 @@ public class MasterRoutingAgent implements IRoutingService {
      */
 	@AgentBody
 	public void agentBody(IInternalAccess ia) {
-		System.out.println("Hello World, from MasterRoutingAgent.");
+		System.out.println("MasterRoutingAgent starting.");
 
-		// Create and start solver thread
-        SolverThread solver = new SolverThread();
+		// Start solver thread
 		solver.start();
 		
 		// Start and start GUI
@@ -69,12 +82,19 @@ public class MasterRoutingAgent implements IRoutingService {
 		// The step will occur every 5000ms, starting in 5000ms
 		exeFeat.repeatStep(5000, 5000, ia1 -> {
 			
+			// Get the route list
+			Route[] route = solver.getRoute();
+			
 			// Notify all subscribers
-			for(SubscriptionIntermediateFuture<String> subscriber: subscriptions) {
+			for(Vehicle v : vehicles) {
 				
 				// Add the current route to the intermediate result
 				// The if-undone is to ignore errors relating to subscribers leaving
-				subscriber.addIntermediateResultIfUndone(solver.getBestRoute().toString());
+				if ((route != null) && (v.index < route.length) && (route[v.index].getCost() > 0)) {
+					v.subscriber.addIntermediateResultIfUndone(route[v.index].toString());
+				} else {
+					v.subscriber.addIntermediateResultIfUndone("No route");
+				}
 			}
 			return IFuture.DONE;
 		});
@@ -97,8 +117,24 @@ public class MasterRoutingAgent implements IRoutingService {
 	 * Default constructor.
 	 */
 	public MasterRoutingAgent() {
-		subscriptions = new LinkedHashSet<SubscriptionIntermediateFuture<String>>();
+		vehicles = new ArrayList<Vehicle>();
+		solver = new SolverThread();
+	}
+
+	/**
+	 * An internal class used to store information about delivery agents.
+	 */
+	public class Vehicle {
+		SubscriptionIntermediateFuture<String> subscriber;
+		int capacity;
+		int index;
+		public Vehicle(int capacity, int index) {
+			this.subscriber = new SubscriptionIntermediateFuture<String>();
+			this.capacity = capacity;
+			this.index = index;
+		}
 	}
 	
-    protected Set<SubscriptionIntermediateFuture<String>> subscriptions;
+    protected ArrayList<Vehicle> vehicles;
+    SolverThread solver;
 }

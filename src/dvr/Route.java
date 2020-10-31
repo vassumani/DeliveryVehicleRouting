@@ -12,7 +12,7 @@ public class Route {
 	public Route(DistanceMatrix d) {
 		distanceMatrix = d;
 		location = new IntegerList();
-		travelDistance = 0;
+		cost = 0;
 		location.reserve(d.size() + 1);
 	}
 
@@ -23,9 +23,31 @@ public class Route {
 	public Route(Route src) {
 		distanceMatrix = src.distanceMatrix;
 		location = new IntegerList(src.location);
-		travelDistance = src.travelDistance;
+		cost = src.cost;
 	}
 
+	/**
+	 * Make a copy of the route.
+	 * @param src The route to be copied (will not be altered)
+	 * @return A copy of the route.
+	 */
+	static public Route makeCopy(Route src) {
+		return new Route(src);
+	}
+
+	/**
+	 * Make a copy of list of routes.
+	 * @param src The routes to be copied (will not be altered)
+	 * @return A copy of the routes.
+	 */
+	static public Route[] makeCopy(Route[] src) {
+		Route[] routes = new Route[src.length];
+		for (int i=0; i<src.length; i++) {
+			routes[i] = new Route(src[i]);
+		}
+		return routes;
+	}
+	
 	/**
 	 * Get the reference distance matrix
 	 * @return Reference to the distance matrix.
@@ -35,11 +57,21 @@ public class Route {
 	}
 	
 	/**
-	 * Get the total distance of the route thus far.
+	 * Get the cost of the route.
 	 * @return Total route cost/distance.
 	 */
-	public long travelDistance() {
-		return travelDistance;
+	public long getCost() {
+		return cost;
+	}
+
+	/**
+	 * Get the cost of the route list.
+	 * @return Total route cost/distance.
+	 */
+	static public long getCost(Route[] route) {
+		long totalCost = 0;
+		for (Route r : route) totalCost += r.cost;
+		return totalCost;
 	}
 	
 	/**
@@ -58,7 +90,7 @@ public class Route {
 		assert (0 <= locationIndex) && (locationIndex < distanceMatrix.size());
 		if (!location.isEmpty()) {
 			int last = location.get(location.size() - 1);
-			travelDistance += distanceMatrix.getDistance(last, locationIndex);
+			cost += distanceMatrix.getDistance(last, locationIndex);
 		}
 		location.add(locationIndex);
 	}
@@ -84,12 +116,12 @@ public class Route {
 			
 			// Update cost from previous location
 			if (prevLocation != invalid) {
-				travelDistance +=
+				cost +=
 					distanceMatrix.getDistance(prevLocation, locationIndex) -
 					distanceMatrix.getDistance(prevLocation, oldLocation);
 			}
 			if (nextLocation != invalid) {
-				travelDistance +=
+				cost +=
 						distanceMatrix.getDistance(locationIndex, nextLocation) -
 						distanceMatrix.getDistance(oldLocation, nextLocation);
 			}
@@ -127,7 +159,7 @@ public class Route {
 	 */
 	public void clear() {
 		location.clear();
-		travelDistance = 0;
+		cost = 0;
 	}
 
 	/**
@@ -140,10 +172,10 @@ public class Route {
 		for (int i=1; i<location.size(); i++) {
 			result += " -> " + location.get(i);
 		}
-		return result + " : Distance " + travelDistance;
+		return result + " : Distance " + cost;
 	}
 	
 	private DistanceMatrix distanceMatrix;
 	private IntegerList location;
-	private long travelDistance;
+	private long cost;
 }

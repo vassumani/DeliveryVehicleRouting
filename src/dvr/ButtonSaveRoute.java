@@ -87,24 +87,60 @@ public class ButtonSaveRoute extends JButton implements ActionListener {
 						bufferedWriter = new BufferedWriter(fileWriter);
 						
 						// Write data to file
-						Route route = solver.getBestRoute();
-						int length = route.size();
+						Route[] routes = solver.getRoute();
 						if (makeCSVFile) {
-							bufferedWriter.write("\"Distance\",\"Path\"");
-							bufferedWriter.newLine();
-							if (length > 0) {
-								bufferedWriter.write(Long.toString(route.travelDistance()) + "," + Integer.toString(route.getLocationIndex(0)));
-								for (int i=1; i<length; i++) {
-									bufferedWriter.write("," + Integer.toString(route.getLocationIndex(i)));
-								}
+							String t;
+
+							// Get maximum number of locations visited for any route
+							int maxLocations = 0;
+							for (Route r : routes) {
+								if (maxLocations < r.size()) maxLocations = r.size();
 							}
-						} else {
-							bufferedWriter.write("Distance " + Long.toString(route.travelDistance()) + ", Path: ");
-							if (length > 0) {
-								bufferedWriter.write(Integer.toString(route.getLocationIndex(0)));
-								for (int i=1; i<length; i++) {
-									bufferedWriter.write(" -> " + Integer.toString(route.getLocationIndex(i)));
+							
+							// Write headers for route cost data
+							t = "";
+							for (int i=0; i<routes.length; i++) t += ",\"Route"+i+"\"";
+							bufferedWriter.write(t);
+							bufferedWriter.newLine();
+							
+							// Write cost data
+							t = "\"Cost\"";
+							for (int r=0; r<routes.length; r++) t += ","+routes[r].getCost();
+							bufferedWriter.write(t);
+							bufferedWriter.newLine();
+							bufferedWriter.newLine(); // Extra line break
+							
+							// Write headers for route location data
+							t = "";
+							for (int r=0; r<routes.length; r++) t += ",\"Route"+r+"\"";
+							bufferedWriter.write(t);
+							bufferedWriter.newLine();
+
+							// Write route location data
+							for (int i=0; i<maxLocations; i++) {
+								t = "";
+								for (int r=0; r<routes.length; r++) {
+									t += "," + ((i < routes[r].size()) ? Integer.toString(routes[r].getLocationIndex(i)) : "");
 								}
+								bufferedWriter.write(t);
+								bufferedWriter.newLine();
+							}
+							
+						} else {
+							
+							// Write each route to the file
+							int j=0;
+							for (Route r : routes) {
+								String t = "Route " + (j++) + ", Cost " + Long.toString(r.getCost()) + ", Path: ";
+								int length = r.size();
+								if (length > 0) {
+									t += Integer.toString(r.getLocationIndex(0));
+									for (int i=1; i<length; i++) {
+										t += " -> " + Integer.toString(r.getLocationIndex(i));
+									}
+								}
+								bufferedWriter.write(t);
+								bufferedWriter.newLine();
 							}
 						}
 					}

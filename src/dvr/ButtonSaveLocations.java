@@ -85,6 +85,7 @@ public class ButtonSaveLocations extends JButton implements ActionListener {
 						for (int i=0; i<iMax; i++) {
 							Location l = dist.getLocation(i);
 							bufferedWriter.write(l.coord.x + ", " + l.coord.y + ", \"" + l.name + "\"");
+							bufferedWriter.newLine();
 						}
 					}
 				}
