@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 /**
  * Used to hold the distances between locations within a location list.

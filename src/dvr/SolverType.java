@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 /**
  * The types of solvers available.

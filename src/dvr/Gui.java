@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 import java.awt.*;
 import java.util.Timer;

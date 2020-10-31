@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 /**
  * Used to manage a list of integers.

@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 /**
  * Contains coordinate information only.

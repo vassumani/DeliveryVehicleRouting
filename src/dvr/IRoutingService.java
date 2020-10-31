@@ -1,4 +1,4 @@
-package DeliveryVehicleRouting;
+package dvr;
 
 import jadex.commons.future.ISubscriptionIntermediateFuture;
 
