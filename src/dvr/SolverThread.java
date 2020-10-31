@@ -11,8 +11,9 @@ public class SolverThread extends Thread {
 	public SolverThread() {
 		paused = true;
 		distanceMatrix = new DistanceMatrix(Location.RandomList(3,  10));
-		solver = new SolverGA(distanceMatrix);
-		bestRoute = new Route(distanceMatrix);
+		vehicleCapacity = null;
+		solver = new SolverGA(distanceMatrix, vehicleCapacity);
+		resetRoute();
 		setDaemon(true); // This thread should not stop the program from terminating
 	}
 	
@@ -45,17 +46,24 @@ public class SolverThread extends Thread {
 			
 			// Run solver
 			// Must not use any values which require synchronisation
-			Route newRoute = localSolver.run();
+			//System.out.println("Start "+localSolver.getType());
+			Route[] newRoute = localSolver.run();
+			//System.out.println("Finish");
+			
+			// Get the total cost of all the routes combined
+			int newTotalCost = 0;
+			for (Route r : newRoute) newTotalCost += r.getCost();
 			
 			// Check if new route is better than previous
 			// If so then swap it out
 			synchronized(this) {
 				if (localSolver == solver) {
-					if ((bestRoute.travelDistance() >= newRoute.travelDistance()) || (bestRoute.travelDistance() < 1)) {
-						bestRoute = newRoute;
+					if ((totalCost >= newTotalCost) || (totalCost < 1)) {
+						route = newRoute;
+						totalCost = newTotalCost;
 					}
 				} else {
-					bestRoute = new Route(distanceMatrix);
+					resetRoute();
 				}
 			}
 		}
@@ -97,18 +105,7 @@ public class SolverThread extends Thread {
 	public void setDistanceMatrix(DistanceMatrix dm) {
 		synchronized(this) {
 			distanceMatrix = dm;
-			switch (solver.getType()) {
-			case ACO:
-				solver = new SolverACO(distanceMatrix);
-				break;
-			case GA:
-				solver = new SolverGA(distanceMatrix);
-				break;
-			default:
-				System.out.println("Unknown solver type in SolverThread.setDistanceMatrix");
-				solver = new SolverGA(distanceMatrix);
-			}
-			bestRoute = new Route(distanceMatrix);
+			recreateSolver(solver.getType());
 		}
 	}
 
@@ -119,18 +116,7 @@ public class SolverThread extends Thread {
 	public void setSolverType(SolverType t) {
 		synchronized(this) {
 			if (t != solver.getType()) {
-				switch (t) {
-				case ACO:
-					solver = new SolverACO(distanceMatrix);
-					break;
-				case GA:
-					solver = new SolverGA(distanceMatrix);
-					break;
-				default:
-					System.out.println("Unknown solver type in SolverThread.setSolverType");
-					solver = new SolverGA(distanceMatrix);
-				}
-				bestRoute = new Route(distanceMatrix);
+				recreateSolver(t);
 			}
 		}
 	}
@@ -149,9 +135,9 @@ public class SolverThread extends Thread {
 	 * Get the current best route available.
 	 * @return The current best route.
 	 */
-	public Route getBestRoute() {
+	public Route[] getRoute() {
 		synchronized(this) {
-			return new Route(bestRoute);
+			return Route.makeCopy(route);
 		}
 	}
 
@@ -177,13 +163,65 @@ public class SolverThread extends Thread {
 			case GA:
 				return new SolverGA((SolverGA)solver);
 			default:
-				return new SolverGA(distanceMatrix);
+				return new SolverGA(distanceMatrix, vehicleCapacity);
 			}
 		}
 	}
 
+	/**
+	 * Add a new vehicle to the list of vehicles which can make deliveries.
+	 * @param capacity The capacity of the vehicle being added (number of locations it can visit).
+	 * @return The vehicle index.
+	 */
+	public int addVehicle(int capacity) {
+		capacity = Math.max(capacity, 1);
+		synchronized(this) {
+	    	if (vehicleCapacity == null) {
+	    		vehicleCapacity = new int[1];
+	    		vehicleCapacity[0] = capacity;
+	    	} else {
+	    		int[] temp = new int[vehicleCapacity.length + 1];
+	    		for (int i=0; i<vehicleCapacity.length; i++) temp[i] = vehicleCapacity[i];
+	    		temp[vehicleCapacity.length] = capacity;
+	    		vehicleCapacity = temp;
+	    	}
+	    	recreateSolver(solver.getType());
+	    	return vehicleCapacity.length - 1;
+		}
+	}
+	
+	/**
+	 * Used internally to recreate the solver when needed.
+	 * This method must be protected by synchronisation, as it has none of its own.
+	 * @param t The type of solver to create.
+	 */
+	private void recreateSolver(SolverType t) {
+		switch (t) {
+		case ACO:
+			solver = new SolverACO(distanceMatrix, vehicleCapacity);
+			break;
+		case GA:
+			solver = new SolverGA(distanceMatrix, vehicleCapacity);
+			break;
+		default:
+			System.out.println("Found unknown solver type while recreating solver");
+			solver = new SolverGA(distanceMatrix, vehicleCapacity);
+		}
+		resetRoute();
+	}
+	
+	/**
+	 * Reset the current best route to nothing.
+	 */
+	private void resetRoute() {
+		route = new Route[] {new Route(distanceMatrix)};
+		totalCost = 0;
+	}
+	
 	private boolean paused;
 	private DistanceMatrix distanceMatrix;
 	private Solver solver;
-	private Route bestRoute;
+	private Route[] route;
+	private int totalCost;
+	private int[] vehicleCapacity;
 }

@@ -40,7 +40,7 @@ public class LocationRenderer extends JPanel {
 		// Get fresh data from solver thread
 		distanceMatrix = solverThread.getDistanceMatrix();
 		Solver solver = showWorking ? solverThread.getSolver() : null;
-		Route route = solverThread.getBestRoute();
+		Route[] routes = solverThread.getRoute();
 		
 		// Get 2D version of graphics handle
 		Graphics2D g2D = (Graphics2D)g;
@@ -52,7 +52,11 @@ public class LocationRenderer extends JPanel {
 		drawGrid(g2D, scale);
 		
 		// Draw the route used
-		drawRoute(g2D, scale, route, Color.getHSBColor(0.3f, 0.5f, 0.9f));
+		float c = 0.1f;
+		for (Route r : routes) {
+			drawRoute(g2D, scale, r, Color.getHSBColor(c, 0.5f, 0.9f));
+			c += 0.15f;
+		}
 		
 		// Draw solver data
 		if (solver != null) {
@@ -65,6 +69,10 @@ public class LocationRenderer extends JPanel {
 		
 		// Draw the locations within the distance matrix
 		drawLocations(g2D, scale);
+		
+		// Draw the length of the route
+		g.setColor(Color.BLACK);
+		g.drawString("RouteTotalLength="+Route.getCost(routes), 5, 30);
 	}
 
 	/**
@@ -186,9 +194,10 @@ public class LocationRenderer extends JPanel {
 		final float maxUsage = Math.max(solverACO.getMaxUsage(), 0.0001f);
 		for (int x=0; x<size; x++) {
 			for (int y=x+1; y<size; y++) {
-				float usage = Math.max(solverACO.getUsage(x, y), solverACO.getUsage(y, x)) / maxUsage;
-				if (usage > 0.001) {
-					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usage), 1f - (0.2f * usage)));
+				float usage = solverACO.getMaxUsage(x, y);
+				float usageFrac = usage / maxUsage;
+				if (usageFrac > 0.001) {
+					g.setColor(Color.getHSBColor(0.8f, 0.1f + (0.5f * usageFrac), 1f - (0.2f * usageFrac)));
 					Coordinate a = scale.Update(distanceMatrix.getLocation(x).coord);
 					Coordinate b = scale.Update(distanceMatrix.getLocation(y).coord);
 					g.drawLine(
@@ -196,8 +205,8 @@ public class LocationRenderer extends JPanel {
 						(int)a.y,
 						(int)b.x,
 						(int)b.y);
-					if (usage > 0.3f) {
-						g.drawString(String.format("%.2f-%.2f", solverACO.getUsage(x, y), solverACO.getUsage(y, x)), (a.x + b.x) / 2, (a.y + b.y) / 2);
+					if (usageFrac > 0.3f) {
+						g.drawString(String.format("%.2f", usage), (a.x + b.x) / 2, (a.y + b.y) / 2);
 					}
 				}
 			}
@@ -252,7 +261,5 @@ public class LocationRenderer extends JPanel {
 				(int)b.x - (int)(arrowLength * Math.cos(angle - arrowAngle)),
 				(int)b.y - (int)(arrowLength * Math.sin(angle - arrowAngle)));
 		}
-		g.setColor(Color.BLACK);
-		g.drawString("RouteLength="+route.travelDistance(), 5, 15);
 	}
 }

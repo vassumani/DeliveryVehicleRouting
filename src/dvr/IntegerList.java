@@ -143,6 +143,19 @@ public class IntegerList {
 	}
 	
 	/**
+	 * Check if this integer list is the same as another.
+	 * @param rhs The other integer list
+	 * @return True if the two lists are identical.
+	 */
+	public boolean isEqual(IntegerList rhs) {
+		if (used != rhs.used) return false;
+		for (int i=0; i<used; i++) {
+			if (data[i] != rhs.data[i]) return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Returns the total number of integers within the list.
 	 * @return Number of integers within the list.
 	 */
@@ -224,6 +237,20 @@ public class IntegerList {
 		// Save new data
 		data = temp;
 		allocation = newSize;
+	}
+
+	/**
+	 * A method to convert this coordinate to a string.
+	 * @return The coordinate in string format.
+	 */
+	@Override
+	public String toString() {
+		String t = "";
+		if (used > 0) {
+			t = Integer.toString(data[0]);
+			for (int i=1; i<used; i++) t += ","+Integer.toString(data[i]);
+		}
+		return "["+t+"]";
 	}
 	
 	private int[] data;
